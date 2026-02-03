@@ -123,3 +123,6 @@ wandb/
 
 # HuggingFace cache
 .cache/
+
+# TempDriveUpload
+.tmp.driveupload

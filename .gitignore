@@ -106,6 +106,7 @@ data/
 *.dcm
 *.nii
 *.nii.gz
+*.jpg
 *.jpeg
 *.png
 !notebooks/*.png

@@ -154,4 +154,30 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 ## 👤 İletişim
 
 Sorularınız için: [email protected]
-# LLMComparison
+# 🏥 Radyoloji LLM Karşılaştırma Projesi
+
+Bu proje, farklı Çok Modlu Büyük Dil Modellerinin (LMM) radyoloji raporu üretme ve görsel soru cevaplama (VQA) performanslarını karşılaştırmak için tasarlanmış bir altyapıdır.
+
+## 📂 Proje Yapısı
+
+*   **`src/`**: Çekirdek kodlar (modeller, utils, data loaderlar).
+    *   `models/`: Model wrapper sınıfları (Qwen2-VL, LLaVA, vb.).
+    *   `utils/`: Prompt yönetimi, model registry, istatistiksel testler.
+    *   `data/`: Veri setleri için helper sınıflar.
+    *   `evaluation/`: BLEU, ROUGE, RadGraph gibi metrikler.
+*   **`configs/`**: Konfigürasyon dosyaları (YAML).
+*   **`notebooks/`**: Deney notebookları.
+    *   `main_experiment.ipynb`: **(Öğrenci Şablonu)** Deneylerinizi burada kurgulayın.
+*   **`experiments/`**: Komut satırı deney scriptleri (opsiyonel).
+
+## 🚀 Başlangıç (Öğrenci Görevi)
+
+1.  Proje gereksinimlerini (`requirements.txt`) inceleyin.
+2.  `notebooks/main_experiment.ipynb` dosyasını açın.
+3.  Notebook'taki `TODO` adımlarını takiperek sistemi ayağa kaldırın ve ilk deneyi yapın.
+
+## 📦 Gereksinimler
+
+*   Python 3.8+
+*   PyTorch (CUDA destekli önerilir)
+*   Transformers, Accelerate, BitsAndBytes

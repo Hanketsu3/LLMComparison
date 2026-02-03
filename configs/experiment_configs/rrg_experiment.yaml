@@ -1,0 +1,146 @@
+# Report Generation (RRG) Experiment Configuration
+
+experiment:
+  name: "report_generation_comparison"
+  description: "Compare report generation across generalist, domain-adaptive, and specialist models"
+  task: "report_generation"
+  
+# Dataset configuration
+dataset:
+  primary: "mimic_cxr"
+  splits:
+    test: "test"
+  
+  # Sampling (for quick experiments)
+  sampling:
+    enabled: false
+    num_samples: 500
+    seed: 42
+  
+  # Data filtering
+  filter:
+    min_report_length: 20
+    max_report_length: 1000
+    views: ["frontal"]  # frontal, lateral, or both
+
+# Models to compare
+models:
+  # Baseline (non-LLM)
+  baselines:
+    - "r2gen"
+    - "r2gencmn"
+  
+  # Generalist LLMs
+  generalist:
+    - "gpt4v"
+    - "gemini"
+    - "llama3"
+  
+  # Domain-adaptive
+  domain_adaptive:
+    - "llava_med"
+    # - "med_palm"  # Uncomment if available
+  
+  # Specialist
+  specialist:
+    - "chexagent"
+    - "llava_rad"
+    # - "maira2"
+    # - "radfm"
+
+# Evaluation metrics
+metrics:
+  # Clinical metrics (primary)
+  clinical:
+    - name: "radgraph_f1"
+      weight: 1.0
+      params:
+        reward_level: "partial"  # partial or full
+    
+    - name: "chexbert_f1"
+      weight: 1.0
+      params:
+        categories: "all"
+  
+  # NLP metrics (secondary)
+  nlp:
+    - name: "bleu"
+      weight: 0.5
+      params:
+        max_order: 4
+    
+    - name: "rouge_l"
+      weight: 0.5
+    
+    - name: "meteor"
+      weight: 0.3
+  
+  # LLM-as-a-Judge
+  llm_judge:
+    - name: "green"
+      weight: 1.0
+      params:
+        judge_model: "gpt-4"
+        criteria:
+          - "completeness"
+          - "accuracy"
+          - "clinical_relevance"
+    
+    - name: "radfact"
+      weight: 1.0
+  
+  # Hallucination
+  hallucination:
+    - name: "factchexcker"
+      weight: 1.0
+
+# Output configuration
+output:
+  # Results directory
+  dir: "./results/rrg_experiment"
+  
+  # Save options
+  save:
+    predictions: true
+    metrics_per_sample: true
+    aggregated_metrics: true
+    statistical_tests: true
+  
+  # Report sections to analyze separately
+  sections:
+    analyze_separately: true
+    sections:
+      - "findings"
+      - "impression"
+
+# Statistical analysis
+statistics:
+  # Significance testing
+  tests:
+    - name: "paired_t_test"
+      alpha: 0.05
+    - name: "wilcoxon_signed_rank"
+      alpha: 0.05
+    - name: "bootstrap_ci"
+      n_bootstrap: 1000
+      confidence: 0.95
+  
+  # Comparisons
+  comparisons:
+    - baseline: "r2gen"
+      vs: ["gpt4v", "chexagent"]
+    - baseline: "gpt4v"
+      vs: ["chexagent", "llava_rad"]
+
+# Hardware
+hardware:
+  batch_size: 4
+  num_workers: 4
+  device: "cuda"
+  precision: "fp16"
+
+# Logging
+logging:
+  log_every_n_samples: 50
+  save_intermediate: true
+  verbose: true

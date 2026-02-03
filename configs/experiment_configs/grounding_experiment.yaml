@@ -1,0 +1,65 @@
+# Grounding Experiment Configuration
+
+experiment:
+  name: "grounding_comparison"
+  description: "Compare phrase grounding capabilities across models"
+  task: "grounding"
+
+# Datasets
+datasets:
+  - name: "ms_cxr"
+    split: "test"
+    annotations: "bounding_box"
+  
+  - name: "vindr_cxr"
+    split: "test"
+    annotations: "bounding_box"
+
+# Models (only those with grounding capability)
+models:
+  generalist:
+    - name: "gpt4v"
+      grounding_method: "text_to_coords"  # Extract coords from text
+  
+  specialist:
+    - name: "maira2"
+      grounding_method: "native"  # Built-in grounding
+    
+    - name: "chexagent"
+      grounding_method: "phrase_grounding"
+
+# Evaluation
+metrics:
+  - name: "iou"
+    thresholds: [0.25, 0.5, 0.75]
+  
+  - name: "precision_at_iou"
+    iou_threshold: 0.5
+  
+  - name: "recall_at_iou"
+    iou_threshold: 0.5
+  
+  - name: "mean_average_precision"
+    iou_range: [0.5, 0.95]
+
+# Analysis
+analysis:
+  by_finding:
+    - "cardiomegaly"
+    - "pleural_effusion"
+    - "pneumonia"
+    - "pneumothorax"
+    - "atelectasis"
+
+# Output
+output:
+  dir: "./results/grounding_experiment"
+  save:
+    predictions: true
+    visualizations: true
+    iou_distributions: true
+
+# Hardware
+hardware:
+  batch_size: 4
+  device: "cuda"

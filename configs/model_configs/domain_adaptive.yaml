@@ -1,0 +1,112 @@
+# Domain-Adaptive Models Configuration
+
+models:
+  # Med-PaLM 2 (via Google API)
+  med_palm:
+    name: "med-palm-2"
+    type: "api"
+    provider: "google"
+    api_key: "${GOOGLE_API_KEY}"
+    max_tokens: 1024
+    temperature: 0.0
+    
+    # Med-PaLM specific settings
+    medical_context: true
+    safety_settings:
+      harm_category_medical: "BLOCK_NONE"
+    
+    rate_limit:
+      requests_per_minute: 10
+      retry_attempts: 3
+      retry_delay: 5
+
+  # LLaVA-Med (Local)
+  llava_med:
+    name: "microsoft/llava-med-v1.5-mistral-7b"
+    type: "local"
+    provider: "huggingface"
+    model_path: "${LLAVA_MED_PATH}"
+    
+    # Architecture
+    architecture:
+      vision_encoder: "openai/clip-vit-large-patch14-336"
+      language_model: "mistralai/Mistral-7B-Instruct-v0.2"
+      vision_feature_layer: -2
+      vision_feature_select_strategy: "default"
+    
+    # Model loading
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+      use_flash_attention: true
+    
+    # Generation settings
+    generation:
+      max_new_tokens: 512
+      temperature: 0.0
+      top_p: 1.0
+      do_sample: false
+    
+    # Image processing
+    image_processing:
+      size: 336
+      normalize: true
+      mean: [0.48145466, 0.4578275, 0.40821073]
+      std: [0.26862954, 0.26130258, 0.27577711]
+
+# Prompts for domain-adaptive models
+prompts:
+  # Report Generation
+  report_generation:
+    system: |
+      You are a medical AI assistant trained on biomedical literature. 
+      Analyze the chest X-ray and generate a comprehensive radiology report.
+    
+    user: |
+      <image>
+      Generate a detailed radiology report for this chest X-ray image.
+      Include both FINDINGS and IMPRESSION sections.
+  
+  # Visual Question Answering  
+  vqa:
+    system: |
+      You are a medical AI assistant. Answer the medical question about 
+      the provided image accurately.
+    
+    user: |
+      <image>
+      Question: {question}
+      Answer:
+  
+  # Grounding
+  grounding:
+    system: |
+      You are a medical AI assistant. Identify the location of the 
+      specified finding in the image.
+    
+    user: |
+      <image>
+      Locate the following finding: {finding}
+      Provide the bounding box coordinates.
+
+# Training details (for reference)
+training_info:
+  llava_med:
+    base_model: "LLaVA-1.5"
+    training_data:
+      - "PMC-15M"  # PubMed Central figures
+      - "Medical instruction data"
+    training_stages:
+      - stage: "vision-language alignment"
+        data: "PMC-15M figure-caption pairs"
+      - stage: "instruction tuning"
+        data: "Medical QA datasets"
+    
+  med_palm:
+    base_model: "PaLM 2"
+    training_data:
+      - "Medical textbooks"
+      - "Clinical guidelines"
+      - "Medical QA datasets"
+    evaluation: "Achieved expert-level on MedQA"

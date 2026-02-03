@@ -1,0 +1,81 @@
+# Visual Question Answering (VQA) Experiment Configuration
+
+experiment:
+  name: "vqa_comparison"
+  description: "Compare VQA performance across model categories"
+  task: "visual_question_answering"
+
+# Datasets
+datasets:
+  - name: "vqa_rad"
+    split: "test"
+    question_types: ["closed", "open"]
+  
+  - name: "slake"
+    split: "test"
+    language: "en"
+    question_types: ["closed", "open"]
+  
+  - name: "pathvqa"
+    split: "test"
+    enabled: false  # Optional
+
+# Models
+models:
+  generalist:
+    - "gpt4v"
+    - "gemini"
+    - "llama3"
+  
+  domain_adaptive:
+    - "llava_med"
+  
+  specialist:
+    - "chexagent"
+    - "llava_rad"
+
+# Evaluation
+metrics:
+  # Question type specific
+  closed_ended:
+    - name: "accuracy"
+      weight: 1.0
+    - name: "f1_score"
+      weight: 0.8
+  
+  open_ended:
+    - name: "bleu"
+      weight: 0.5
+    - name: "recall"
+      weight: 0.7
+    - name: "exact_match"
+      weight: 0.3
+
+# Analysis dimensions
+analysis:
+  # By question type
+  by_question_type:
+    - "yes/no"
+    - "what"
+    - "where"
+    - "how many"
+  
+  # By anatomy
+  by_anatomy:
+    - "chest"
+    - "abdomen"
+    - "head"
+    - "other"
+
+# Output
+output:
+  dir: "./results/vqa_experiment"
+  save:
+    predictions: true
+    confusion_matrices: true
+    error_analysis: true
+
+# Hardware
+hardware:
+  batch_size: 8
+  device: "cuda"

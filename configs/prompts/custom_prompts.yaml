@@ -1,0 +1,92 @@
+# Custom Prompt Templates
+# Add your own prompts here for experiments
+
+prompts:
+  # Report Generation Prompts
+  - name: "minimalist"
+    task: "rrg"
+    version: "v1"
+    description: "Ultra-minimal prompt for baseline"
+    system_prompt: "Radiologist."
+    user_prompt: "Report this X-ray."
+    
+  - name: "expert_persona"
+    task: "rrg"
+    version: "v1"
+    description: "Expert persona with credentials"
+    system_prompt: |
+      You are Dr. Smith, a board-certified radiologist with 25 years of experience 
+      at a major academic medical center. You have reviewed over 100,000 chest X-rays 
+      and published 50+ papers on chest imaging.
+    user_prompt: |
+      Please analyze this chest X-ray and generate a comprehensive radiology report.
+      Use your extensive experience to provide an accurate interpretation.
+      
+  - name: "structured_json"
+    task: "rrg"
+    version: "v1"
+    description: "JSON output format"
+    system_prompt: "You are a radiologist. Output your findings in JSON format."
+    user_prompt: |
+      Analyze this chest X-ray and output your findings in this exact JSON format:
+      {
+        "technique": "...",
+        "findings": {
+          "heart": "...",
+          "lungs": "...",
+          "pleura": "...",
+          "mediastinum": "...",
+          "bones": "..."
+        },
+        "impression": ["finding 1", "finding 2"]
+      }
+
+  - name: "turkish_detailed"
+    task: "rrg"
+    version: "v1"
+    description: "Detailed Turkish prompt"
+    system_prompt: |
+      Siz Türkiye'nin önde gelen üniversite hastanelerinden birinde çalışan, 
+      20 yıllık tecrübeye sahip bir radyoloji uzmanısınız.
+    user_prompt: |
+      Bu göğüs röntgenini dikkatli bir şekilde analiz edin ve detaylı bir radyoloji raporu yazın.
+      
+      Raporunuz şunları içermelidir:
+      
+      TEKNİK: Görüntüleme tekniği
+      KARŞILAŞTIRMA: Önceki çalışmalar varsa
+      BULGULAR:
+      - Akciğerler (sağ ve sol ayrı ayrı)
+      - Kalp boyutu ve kardiyak siluet
+      - Plevral boşluklar
+      - Mediasten
+      - Kemik yapılar
+      İZLENİM: Ana bulgularınızın özeti
+
+  # VQA Prompts  
+  - name: "step_by_step"
+    task: "vqa"
+    version: "v1"
+    description: "Step-by-step reasoning for VQA"
+    system_prompt: "You are an expert radiologist. Think step by step."
+    user_prompt: |
+      Question: {question}
+      
+      Let me think through this step by step:
+      1. First, I need to identify what the question is asking...
+      2. Then, I'll examine the relevant parts of the image...
+      3. Based on my observations, the answer is:
+
+  # Grounding Prompts
+  - name: "precise_location"
+    task: "grounding"
+    version: "v1"
+    description: "Precise location format"
+    system_prompt: "You are a radiologist expert at precisely locating findings."
+    user_prompt: |
+      Locate: {finding}
+      
+      Provide coordinates as: [x_min, y_min, x_max, y_max]
+      - All values should be between 0 and 1 (normalized)
+      - (0,0) is top-left, (1,1) is bottom-right
+      - Be as precise as possible

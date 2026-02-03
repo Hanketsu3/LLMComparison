@@ -1,0 +1,114 @@
+# Base Configuration for LLM Comparison Project
+
+# Project Settings
+project:
+  name: "llm-radiology-comparison"
+  version: "0.1.0"
+  seed: 42
+  debug: false
+
+# Paths
+paths:
+  data_dir: "./data"
+  results_dir: "./results"
+  logs_dir: "./results/logs"
+  figures_dir: "./results/figures"
+  checkpoints_dir: "./checkpoints"
+  cache_dir: "./.cache"
+
+# Data Settings
+data:
+  # Primary datasets
+  mimic_cxr:
+    path: "${MIMIC_CXR_PATH}"
+    split: "test"
+    max_samples: null  # null = use all
+    image_size: [224, 224]
+  
+  iu_xray:
+    path: "${IU_XRAY_PATH}"
+    split: "test"
+    max_samples: null
+    image_size: [224, 224]
+  
+  # VQA datasets
+  vqa_rad:
+    path: "${VQA_RAD_PATH}"
+    split: "test"
+  
+  slake:
+    path: "${SLAKE_PATH}"
+    split: "test"
+  
+  # Grounding datasets
+  ms_cxr:
+    path: "${MS_CXR_PATH}"
+    split: "test"
+  
+  vindr_cxr:
+    path: "${VINDR_CXR_PATH}"
+    split: "test"
+  
+  # OOD test
+  padchest:
+    path: "${PADCHEST_PATH}"
+    split: "test"
+
+# Evaluation Settings
+evaluation:
+  # Clinical metrics (Gold Standard)
+  clinical_metrics:
+    - "radgraph_f1"
+    - "chexbert_f1"
+  
+  # NLP metrics (for reference)
+  nlp_metrics:
+    - "bleu"
+    - "rouge_l"
+    - "meteor"
+  
+  # LLM-as-a-Judge
+  llm_judge:
+    enabled: true
+    judge_model: "gpt-4"
+    metrics:
+      - "green"
+      - "radcliq"
+      - "radfact"
+  
+  # Hallucination detection
+  hallucination:
+    enabled: true
+    metrics:
+      - "factchexcker"
+      - "object_hallucination"
+  
+  # Statistical testing
+  statistics:
+    significance_level: 0.05
+    bootstrap_samples: 1000
+    tests:
+      - "paired_t_test"
+      - "wilcoxon"
+      - "bootstrap_ci"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  save_to_file: true
+  
+# Experiment Tracking
+tracking:
+  wandb:
+    enabled: true
+    project: "${WANDB_PROJECT}"
+    entity: "${WANDB_ENTITY}"
+    tags: ["radiology", "llm-comparison"]
+
+# Hardware
+hardware:
+  device: "cuda"
+  precision: "fp16"  # fp16, bf16, fp32
+  num_workers: 4
+  batch_size: 8

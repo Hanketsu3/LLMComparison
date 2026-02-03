@@ -1,0 +1,139 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-comparison"
+version = "0.1.0"
+description = "Domain-Specific vs General-Purpose LLMs for Radiology Research"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Researcher", email = "researcher@example.com"}
+]
+keywords = [
+    "radiology",
+    "large-language-models",
+    "medical-imaging",
+    "chest-xray",
+    "report-generation",
+    "visual-question-answering"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "transformers>=4.35.0",
+    "accelerate>=0.24.0",
+    "bitsandbytes>=0.41.0",
+    "openai>=1.0.0",
+    "google-generativeai>=0.3.0",
+    "anthropic>=0.7.0",
+    "datasets>=2.14.0",
+    "evaluate>=0.4.0",
+    "scikit-learn>=1.3.0",
+    "scipy>=1.11.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.18.0",
+    "jupyter>=1.0.0",
+    "ipywidgets>=8.0.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "tqdm>=4.66.0",
+    "Pillow>=10.0.0",
+    "pydicom>=2.4.0",
+    "nibabel>=5.1.0",
+    "rich>=13.0.0",
+    "typer>=0.9.0",
+    "wandb>=0.16.0",
+    "omegaconf>=2.3.0",
+    "hydra-core>=1.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+radgraph = [
+    "radgraph>=0.0.5",
+    "stanza>=1.5.0",
+    "spacy>=3.6.0",
+]
+medical = [
+    "monai>=1.3.0",
+    "medical-image-dataset>=0.1.0",
+]
+
+[project.scripts]
+llm-compare = "src.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/LLMComparison"
+Documentation = "https://github.com/yourusername/LLMComparison#readme"
+Repository = "https://github.com/yourusername/LLMComparison"
+Issues = "https://github.com/yourusername/LLMComparison/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "configs*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.json"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | results
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

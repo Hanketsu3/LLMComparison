@@ -24,9 +24,23 @@ Proje altyapısı aşağıdaki görevleri destekler:
 *   **Yerelleştirme (Grounding):** Patolojilerin (örn. pnömoni) görüntü üzerindeki koordinatlarını bulma.
 
 ### 3. Başarı Metrikleri
-*   **NLP:** BLEU, ROUGE (Metin benzerliği).
-*   **Klinik:** RadGraph F1 (Varlık ve ilişki doğruluğu).
-*   **Doğruluk:** VQA Accuracy, IoU (Grounding için).
+*   **NLP:** BLEU, ROUGE (Metin benzerliği - *Not: Tıbbi doğruluk için yetersizdir, ancak baseline için kullanılır*).
+*   **Klinik:** RadGraph F1 (Varlık ve ilişki doğruluğu - *Gold Standard*).
+*   **Güvenilirlik:** Halüsinasyon Oranı ve Bias Testi.
+
+---
+
+## 📚 Teorik Arkaplan (Literatür Özeti)
+
+Radyoloji raporu üretimi çalışmalarında 4 ana dönem bulunmaktadır:
+1.  **Baseline Era (R2Gen):** CNN + Transformer kullanımı.
+2.  **Knowledge-Driven:** Tıbbi bilgi grafikleri (RadGraph) ile destekleme.
+3.  **RAG & Retrieval:** Benzer vakaları "kopya" çekerek halüsinasyonu azaltma.
+4.  **SOTA (Multimodal LLM):** Chatbot şeklinde çalışan, yerelleştirme (grounding) yapabilen ajanlar.
+
+**⚠️ Araştırma Tuzakları (Pitfalls):**
+*   **Prior Bias:** Modelin görüntüye bakmadan "Akciğerler temiz" diye ezbere rapor yazması. *Çözüm: Boş görüntü testi.*
+*   **Metrik Yanılgısı:** BLEU skorunun yüksek olması modelin klinik olarak doğru olduğunu göstermez.
 
 ---
 
@@ -41,6 +55,7 @@ LLMComparison/
 │   ├── data/              # Veri yükleyiciler (MIMIC, VQA-RAD vb.)
 │   ├── evaluation/        # Metrik hesaplamaları (RadGraph, GREEN)
 │   └── utils/             # Yardımcı araçlar (Prompt yönetimi)
+│       └── rag.py         # <--- YENİ: Retrieval-Augmented Generation iskeleti
 ├── configs/               # Deney konfigürasyonları (YAML)
 │   └── experiment_configs/ # RRG, VQA, Grounding ayarları
 ├── experiments/           # Toplu deney scriptleri

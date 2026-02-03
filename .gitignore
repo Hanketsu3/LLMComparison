@@ -102,14 +102,7 @@ results/tables/
 *.log
 
 # Data files (do not commit patient data!)
-data/
-*.dcm
-*.nii
-*.nii.gz
-*.jpg
-*.jpeg
-*.png
-!notebooks/*.png
+
 
 # Model checkpoints
 checkpoints/

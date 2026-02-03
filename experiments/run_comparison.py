@@ -1,7 +1,7 @@
 """
 Run Comparison Experiment
 
-Main script for comparing all model categories on report generation.
+Main script for comparing models on Report Generation (RRG), VQA, and Grounding.
 """
 
 import argparse
@@ -13,9 +13,16 @@ from typing import Dict, List
 import yaml
 from tqdm import tqdm
 
-from src.data import MIMICCXRDataset
+from src.data import (
+    MIMICCXRDataset, 
+    VQARADDataset, 
+    MSCXRDataset
+)
 from src.evaluation.clinical_metrics import RadGraphF1Evaluator
 from src.evaluation.hallucination import FactCheXckerEvaluator
+from src.evaluation.grounding import BBoxEvaluator
+from src.evaluation.nlp_metrics import BLEUEvaluator
+from src.evaluation.vqa_metrics import VQAAccuracyEvaluator
 from src.utils.statistical_tests import StatisticalTester
 from src.utils.logging import setup_logging
 from src.utils.model_registry import (
@@ -34,7 +41,7 @@ def load_config(config_path: str) -> Dict:
         return yaml.safe_load(f)
 
 
-def run_model(model, dataset, num_samples: int = None) -> List[str]:
+def run_model(model, dataset, task: str = "report_generation", num_samples: int = None) -> List[Dict]:
     """Run a model on the dataset and collect predictions."""
     predictions = []
     
@@ -42,13 +49,23 @@ def run_model(model, dataset, num_samples: int = None) -> List[str]:
     if num_samples:
         samples = samples[:num_samples]
     
-    for sample in tqdm(samples, desc=f"Running {model.model_name}"):
+    for sample in tqdm(samples, desc=f"Running {model.model_name} on {task}"):
         try:
-            output = model.generate_report(sample.image_path)
-            predictions.append(output.text)
+            if task == "report_generation":
+                output = model.generate_report(sample.image_path)
+                predictions.append({"text": output.text, "ref": getattr(sample, "report", "")})
+            elif task == "visual_question_answering":
+                output = model.answer_question(sample.image_path, sample.question)
+                predictions.append({"text": output.text, "ref": getattr(sample, "answer", "")})
+            elif task == "grounding":
+                output = model.ground_finding(sample.image_path, sample.finding)
+                predictions.append({
+                    "bboxes": output.bounding_boxes, 
+                    "ref_bboxes": getattr(sample, "bounding_boxes", [])
+                })
         except Exception as e:
-            logger.error(f"Error processing sample {sample.study_id}: {e}")
-            predictions.append("")
+            logger.error(f"Error processing sample {getattr(sample, 'study_id', 'unknown')}: {e}")
+            predictions.append({})
     
     return predictions
 
@@ -116,21 +133,53 @@ def main():
         config = yaml.safe_load(f)
     
     # Load dataset
+    # Determine task from config
+    task = config.get("experiment", {}).get("task", "report_generation")
+    logger.info(f"Task: {task}")
+
+    # Load dataset (Placeholder - typically would use a factory)
+    # Load dataset
     logger.info("Loading dataset...")
-    dataset = MIMICCXRDataset(
-        data_dir=config["dataset"].get("path", "./data/mimic-cxr"),
-        split="test",
-        max_samples=args.num_samples,
-    )
+    data_path = config.get("dataset", {}).get("path")
     
-    # Get reference reports
-    references = [sample.full_report for sample in dataset]
-    
-    # Initialize evaluators
-    evaluators = [
-        RadGraphF1Evaluator(),
-        FactCheXckerEvaluator(),
-    ]
+    if task == "report_generation":
+        dataset = MIMICCXRDataset(
+            data_dir=data_path or "./data/mimic-cxr",
+            split="test",
+            max_samples=args.num_samples,
+        )
+    elif task == "visual_question_answering":
+        dataset = VQARADDataset(
+            data_dir=data_path or "./data/vqa-rad",
+            split="test",
+            max_samples=args.num_samples,
+        )
+    elif task == "grounding":
+        dataset = MSCXRDataset(
+            data_dir=data_path or "./data/ms-cxr",
+            split="test",
+            max_samples=args.num_samples,
+        )
+    else:
+        logger.warning(f"Unknown task {task}, using dummy list.")
+        dataset = []
+
+    # Initialize evaluators based on task
+    evaluators = []
+    if task == "report_generation":
+        evaluators = [
+            RadGraphF1Evaluator(),
+            FactCheXckerEvaluator(),
+        ]
+    elif task == "visual_question_answering":
+        evaluators = [
+            VQAAccuracyEvaluator(), 
+            BLEUEvaluator()
+        ]
+    elif task == "grounding":
+        evaluators = [
+            BBoxEvaluator()
+        ]
     
     # Run experiments
     results = {}
@@ -145,13 +194,20 @@ def main():
             model = load_model(model_name)
             model.load()
             
-            predictions = run_model(model, dataset, args.num_samples)
+            predictions = run_model(model, dataset, task=task, num_samples=args.num_samples)
             all_predictions[model_name] = predictions
             
-            scores = evaluate_predictions(predictions, references, evaluators)
-            results[model_name] = scores
+            # Extract lists for evaluation
+            preds_text = [p.get("text", "") for p in predictions]
+            refs_text = [p.get("ref", "") for p in predictions]
             
-            logger.info(f"{model_name} results: {scores}")
+            if evaluators and preds_text and refs_text:
+                scores = evaluate_predictions(preds_text, refs_text, evaluators)
+                results[model_name] = scores
+                logger.info(f"{model_name} results: {scores}")
+            else:
+                results[model_name] = {"status": "completed", "count": len(predictions)}
+                logger.info(f"{model_name}: {len(predictions)} predictions generated.")
             
             # Clean up GPU memory
             del model

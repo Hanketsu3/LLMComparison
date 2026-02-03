@@ -25,3 +25,4 @@ google-generativeai>=0.3.0
 
 # Development
 pytest>=7.0.0
+radgraph-benchmark>=0.0.3

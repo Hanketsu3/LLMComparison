@@ -90,6 +90,12 @@ python experiments/run_comparison.py --config configs/experiment_configs/vqa_exp
 
 ---
 
+## 🔮 Gelecek Çalışmalar (TODO)
+- [ ] **MedGemma Entegrasyonu:** Google'ın açık kaynaklı MedGemma modeli ile kıyaslama ekle.
+- [ ] **Daha Fazla Metrik:** BertScore ve BLEURT gibi semantik metrikleri dahil et.
+
+---
+
 ## 👤 Katkıda Bulunanlar
 *   **Proje Yürütücüsü:** Egemen Kaçıkan / Hanketsu3
 *   **İletişim:** [Proje Linki](https://github.com/Hanketsu3/LLMComparison)

@@ -92,7 +92,6 @@ pip install -r requirements.txt
 ## 🔧 İleri Seviye Kullanım (Script ile)
 
 Toplu deneyler için `experiments/run_comparison.py` scripti kullanılabilir. Hangi görevin çalışacağı `config` dosyasından belirlenir.
-
 **Rapor Üretimi (RRG) Testi:**
 ```bash
 python experiments/run_comparison.py --config configs/experiment_configs/rrg_experiment.yaml

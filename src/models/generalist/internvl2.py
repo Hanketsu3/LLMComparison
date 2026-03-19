@@ -62,6 +62,13 @@ class InternVL2Model(BaseRadiologyModel):
                 **load_kwargs,
             ).cuda().eval()
         else:
+            if self.load_in_4bit:
+                from transformers import BitsAndBytesConfig
+                load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                )
+            
             load_kwargs["device_map"] = "auto"
             self.model = AutoModel.from_pretrained(
                 self.model_name,

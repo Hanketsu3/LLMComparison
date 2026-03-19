@@ -45,11 +45,24 @@ class Qwen2VLModel(BaseRadiologyModel):
         logger.info(f"Loading {self.model_name}...")
         
         self.processor = AutoProcessor.from_pretrained(self.model_name)
-        self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-            self.model_name,
-            torch_dtype="auto",
-            device_map="auto",
-        )
+        
+        if self.load_in_4bit:
+            from transformers import BitsAndBytesConfig
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+            )
+            self.model = Qwen2VLForConditionalGeneration.from_pretrained(
+                self.model_name,
+                device_map="auto",
+                quantization_config=quantization_config,
+            )
+        else:
+            self.model = Qwen2VLForConditionalGeneration.from_pretrained(
+                self.model_name,
+                torch_dtype="auto",
+                device_map="auto",
+            )
         
         self._is_loaded = True
         logger.info(f"Loaded {self.model_name}")

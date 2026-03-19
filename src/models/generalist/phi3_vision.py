@@ -1,7 +1,8 @@
 """
-Phi-3 Vision Model Wrapper
+Phi-3.5 Vision Model Wrapper
 
 Microsoft's small but powerful open-source vision-language model - completely free.
+Updated to Phi-3.5-vision-instruct for transformers >= 4.45 compatibility.
 """
 
 import logging
@@ -14,15 +15,15 @@ logger = logging.getLogger(__name__)
 
 class Phi3VisionModel(BaseRadiologyModel):
     """
-    Phi-3 Vision model wrapper - Free, open-source from Microsoft.
+    Phi-3.5 Vision model wrapper - Free, open-source from Microsoft.
     
-    Small (4B params) but powerful - runs on consumer GPUs.
-    Model: microsoft/Phi-3-vision-128k-instruct
+    Uses Phi-3.5-vision-instruct (4.2B params) instead of older Phi-3-vision
+    which has DynamicCache incompatibility with transformers >= 4.45.
     """
     
     def __init__(
         self,
-        model_name: str = "microsoft/Phi-3-vision-128k-instruct",
+        model_name: str = "microsoft/Phi-3.5-vision-instruct",
         device: str = "cuda",
         load_in_4bit: bool = False,
         max_new_tokens: int = 512,
@@ -33,7 +34,7 @@ class Phi3VisionModel(BaseRadiologyModel):
         self.max_new_tokens = max_new_tokens
     
     def load(self) -> None:
-        """Load Phi-3 Vision model."""
+        """Load Phi-3.5 Vision model."""
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoProcessor
@@ -44,14 +45,16 @@ class Phi3VisionModel(BaseRadiologyModel):
         
         self.processor = AutoProcessor.from_pretrained(
             self.model_name, 
-            trust_remote_code=True
+            trust_remote_code=True,
+            num_crops=4,  # Phi-3.5 supports multi-crop
         )
+        
         # Try flash_attention_2 first, fall back to eager (Colab compatibility)
         try:
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 trust_remote_code=True,
-                torch_dtype="auto",
+                torch_dtype=torch.bfloat16,
                 device_map="auto",
                 _attn_implementation="flash_attention_2",
             )
@@ -60,7 +63,7 @@ class Phi3VisionModel(BaseRadiologyModel):
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 trust_remote_code=True,
-                torch_dtype="auto",
+                torch_dtype=torch.bfloat16,
                 device_map="auto",
                 _attn_implementation="eager",
             )
@@ -81,6 +84,7 @@ class Phi3VisionModel(BaseRadiologyModel):
         img = self.preprocess_image(image)
         prompt = prompt or "Generate a detailed radiology report for this chest X-ray. Include FINDINGS and IMPRESSION sections."
         
+        # Phi-3.5 uses placeholder tokens for images
         messages = [
             {"role": "user", "content": f"<|image_1|>\n{prompt}"}
         ]

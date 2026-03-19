@@ -85,14 +85,15 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
     ),
     "phi3-vision": ModelInfo(
         name="phi3-vision",
-        display_name="Phi-3 Vision",
+        display_name="Phi-3.5-Vision",
         category=ModelCategory.GENERALIST,
         cost=ModelCost.FREE,
         module_path="src.models.generalist.phi3_vision",
         class_name="Phi3VisionModel",
-        params="4B",
-        description="Microsoft's small but powerful VLM",
+        params="4.2B",
+        description="Microsoft's compact VLM (Phi-3.5 updated)",
         colab_t4_native=True,
+        default_kwargs={"model_name": "microsoft/Phi-3.5-vision-instruct"},
     ),
     "internvl2-2b": ModelInfo(
         name="internvl2-2b",

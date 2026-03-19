@@ -105,13 +105,14 @@ class Llama3Model(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
+        vqa_prompt = self.format_vqa_prompt(question)
         
         messages = [
             {
                 "role": "user",
                 "content": [
                     {"type": "image"},
-                    {"type": "text", "text": question},
+                    {"type": "text", "text": vqa_prompt},
                 ],
             }
         ]
@@ -119,7 +120,7 @@ class Llama3Model(BaseRadiologyModel):
         input_text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
         inputs = self.processor(images=img, text=input_text, return_tensors="pt").to(self.model.device)
         
-        output = self.model.generate(**inputs, max_new_tokens=256, do_sample=False)
+        output = self.model.generate(**inputs, max_new_tokens=50, do_sample=False)
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = output[:, inputs['input_ids'].shape[1]:]
         text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]

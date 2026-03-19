@@ -109,13 +109,14 @@ class MiniCPMVModel(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
-        msgs = [{"role": "user", "content": [img, question]}]
+        vqa_prompt = self.format_vqa_prompt(question)
+        msgs = [{"role": "user", "content": [img, vqa_prompt]}]
         
         answer = self.model.chat(
             image=None,
             msgs=msgs,
             tokenizer=self.tokenizer,
-            max_new_tokens=256,
+            max_new_tokens=50,
         )
         
         return ModelOutput(text=answer)

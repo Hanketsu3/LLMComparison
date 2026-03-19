@@ -114,9 +114,10 @@ class Phi3VisionModel(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
+        vqa_prompt = self.format_vqa_prompt(question)
         
         messages = [
-            {"role": "user", "content": f"<|image_1|>\n{question}"}
+            {"role": "user", "content": f"<|image_1|>\n{vqa_prompt}"}
         ]
         
         prompt_text = self.processor.tokenizer.apply_chat_template(
@@ -124,7 +125,7 @@ class Phi3VisionModel(BaseRadiologyModel):
         )
         
         inputs = self.processor(prompt_text, [img], return_tensors="pt").to(self.device)
-        output = self.model.generate(**inputs, max_new_tokens=256)
+        output = self.model.generate(**inputs, max_new_tokens=50)
         
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = output[:, inputs['input_ids'].shape[1]:]

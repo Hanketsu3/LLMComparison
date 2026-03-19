@@ -126,10 +126,11 @@ class InternVL2Model(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
-        prompt = f"<image>\n{question}"
+        vqa_prompt = self.format_vqa_prompt(question)
+        prompt = f"<image>\n{vqa_prompt}"
         
         pixel_values = self._build_pixel_values(img)
-        generation_config = {"max_new_tokens": 256, "do_sample": False}
+        generation_config = {"max_new_tokens": 50, "do_sample": False}
         
         response = self.model.chat(
             self.tokenizer,

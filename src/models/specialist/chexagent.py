@@ -85,8 +85,9 @@ class CheXagentModel(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
-        inputs = self.processor(images=img, text=question, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=256)
+        vqa_prompt = self.format_vqa_prompt(question)
+        inputs = self.processor(images=img, text=vqa_prompt, return_tensors="pt").to(self.device)
+        outputs = self.model.generate(**inputs, max_new_tokens=50)
         
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = outputs[:, inputs['input_ids'].shape[1]:]

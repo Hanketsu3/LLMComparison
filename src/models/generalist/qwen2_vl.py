@@ -99,13 +99,18 @@ class Qwen2VLModel(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
+        vqa_prompt = self.format_vqa_prompt(question)
         
         messages = [
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": self.VQA_SYSTEM_PROMPT}],
+            },
             {
                 "role": "user",
                 "content": [
                     {"type": "image", "image": img},
-                    {"type": "text", "text": question},
+                    {"type": "text", "text": f"Question: {question}\nAnswer:"},
                 ],
             }
         ]
@@ -114,7 +119,7 @@ class Qwen2VLModel(BaseRadiologyModel):
         inputs = self.processor(text=[text], images=[img], return_tensors="pt", padding=True)
         inputs = inputs.to(self.device)
         
-        output_ids = self.model.generate(**inputs, max_new_tokens=256)
+        output_ids = self.model.generate(**inputs, max_new_tokens=50)
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = output_ids[:, inputs.input_ids.shape[1]:]
         output_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]

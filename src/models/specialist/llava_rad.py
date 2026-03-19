@@ -92,10 +92,11 @@ class LLaVARadModel(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
-        prompt = f"<image>\n{question}"
+        vqa_prompt = self.format_vqa_prompt(question)
+        prompt = f"<image>\n{vqa_prompt}"
         
         inputs = self.processor(text=prompt, images=img, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=256)
+        outputs = self.model.generate(**inputs, max_new_tokens=50)
         
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = outputs[:, inputs['input_ids'].shape[1]:]

@@ -82,6 +82,22 @@ class BaseRadiologyModel(ABC):
             image = Image.open(image).convert("RGB")
         return image
     
+    # Standard VQA prompt that forces concise answers
+    VQA_SYSTEM_PROMPT = (
+        "You are a medical expert answering questions about radiological images. "
+        "Give ONLY the direct answer with NO explanation. "
+        "For yes/no questions, answer ONLY 'yes' or 'no'. "
+        "For other questions, answer in 1-3 words maximum."
+    )
+    
+    def format_vqa_prompt(self, question: str) -> str:
+        """Format a VQA question with system instructions for concise output."""
+        return (
+            f"{self.VQA_SYSTEM_PROMPT}\n\n"
+            f"Question: {question}\n"
+            f"Answer:"
+        )
+    
     @property
     def is_loaded(self) -> bool:
         return self._is_loaded

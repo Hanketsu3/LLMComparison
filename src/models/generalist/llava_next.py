@@ -100,11 +100,12 @@ class LLaVANextModel(BaseRadiologyModel):
             self.load()
         
         img = self.preprocess_image(image)
-        prompt = f"[INST] <image>\n{question} [/INST]"
+        vqa_prompt = self.format_vqa_prompt(question)
+        prompt = f"[INST] <image>\n{vqa_prompt} [/INST]"
         
         inputs = self.processor(prompt, img, return_tensors="pt").to(self.device)
         
-        output = self.model.generate(**inputs, max_new_tokens=256)
+        output = self.model.generate(**inputs, max_new_tokens=50)
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = output[:, inputs['input_ids'].shape[1]:]
         text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]

@@ -49,6 +49,21 @@ class Phi3VisionModel(BaseRadiologyModel):
             num_crops=4,  # Phi-3.5 supports multi-crop
         )
         
+        # Phi-3.5 Vision hotfix for transformers >= 4.45 (from_legacy_cache was removed)
+        import transformers
+        if hasattr(transformers, "cache_utils") and hasattr(transformers.cache_utils, "DynamicCache"):
+            if not hasattr(transformers.cache_utils.DynamicCache, "from_legacy_cache"):
+                @classmethod
+                def from_legacy_cache(cls, past_key_values, max_cache_len=None):
+                    cache = cls()
+                    if past_key_values is not None:
+                        for layer_idx in range(len(past_key_values)):
+                            key_states, value_states = past_key_values[layer_idx]
+                            cache.update(key_states, value_states, layer_idx)
+                    return cache
+                transformers.cache_utils.DynamicCache.from_legacy_cache = from_legacy_cache
+        
+        
         # Try flash_attention_2 first, fall back to eager (Colab compatibility)
         try:
             self.model = AutoModelForCausalLM.from_pretrained(

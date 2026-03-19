@@ -88,7 +88,9 @@ class Llama3Model(BaseRadiologyModel):
         inputs = self.processor(images=img, text=input_text, return_tensors="pt").to(self.model.device)
         
         output = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, do_sample=False)
-        text = self.processor.decode(output[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = output[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         
         return ModelOutput(text=text)
     
@@ -118,6 +120,8 @@ class Llama3Model(BaseRadiologyModel):
         inputs = self.processor(images=img, text=input_text, return_tensors="pt").to(self.model.device)
         
         output = self.model.generate(**inputs, max_new_tokens=256, do_sample=False)
-        text = self.processor.decode(output[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = output[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         
         return ModelOutput(text=text)

@@ -25,9 +25,9 @@ class InternVL2Model(BaseRadiologyModel):
     
     def __init__(
         self,
-        model_name: str = "OpenGVLab/InternVL2-8B",
+        model_name: str = "OpenGVLab/InternVL2-2B",
         device: str = "cuda",
-        load_in_4bit: bool = True,
+        load_in_4bit: bool = False,
         max_new_tokens: int = 512,
         **kwargs
     ):
@@ -49,16 +49,46 @@ class InternVL2Model(BaseRadiologyModel):
             self.model_name, 
             trust_remote_code=True
         )
-        self.model = AutoModel.from_pretrained(
-            self.model_name,
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,
-            device_map="auto",
-        )
         
-        self.model.eval()
+        load_kwargs = {
+            "trust_remote_code": True,
+            "torch_dtype": torch.bfloat16,
+        }
+        
+        # For 2B model, load directly to GPU (small enough)
+        if "2B" in self.model_name or "2b" in self.model_name:
+            self.model = AutoModel.from_pretrained(
+                self.model_name,
+                **load_kwargs,
+            ).cuda().eval()
+        else:
+            load_kwargs["device_map"] = "auto"
+            self.model = AutoModel.from_pretrained(
+                self.model_name,
+                **load_kwargs,
+            ).eval()
+        
         self._is_loaded = True
         logger.info(f"Loaded {self.model_name}")
+    
+    def _build_pixel_values(self, img: Image.Image):
+        """Build pixel_values tensor for InternVL2."""
+        import torch
+        import torchvision.transforms as T
+        from torchvision.transforms.functional import InterpolationMode
+        
+        IMAGENET_MEAN = (0.485, 0.456, 0.406)
+        IMAGENET_STD = (0.229, 0.224, 0.225)
+        
+        transform = T.Compose([
+            T.Lambda(lambda img: img.convert('RGB') if img.mode != 'RGB' else img),
+            T.Resize((448, 448), interpolation=InterpolationMode.BICUBIC),
+            T.ToTensor(),
+            T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+        ])
+        
+        pixel_values = transform(img).unsqueeze(0).to(torch.bfloat16).cuda()
+        return pixel_values
     
     def generate_report(
         self,
@@ -73,11 +103,14 @@ class InternVL2Model(BaseRadiologyModel):
         img = self.preprocess_image(image)
         prompt = prompt or "<image>\nGenerate a detailed radiology report for this chest X-ray with FINDINGS and IMPRESSION sections."
         
+        pixel_values = self._build_pixel_values(img)
+        generation_config = {"max_new_tokens": self.max_new_tokens, "do_sample": False}
+        
         response = self.model.chat(
             self.tokenizer,
-            img,
+            pixel_values,
             prompt,
-            generation_config={"max_new_tokens": self.max_new_tokens}
+            generation_config,
         )
         
         return ModelOutput(text=response)
@@ -95,11 +128,14 @@ class InternVL2Model(BaseRadiologyModel):
         img = self.preprocess_image(image)
         prompt = f"<image>\n{question}"
         
+        pixel_values = self._build_pixel_values(img)
+        generation_config = {"max_new_tokens": 256, "do_sample": False}
+        
         response = self.model.chat(
             self.tokenizer,
-            img,
+            pixel_values,
             prompt,
-            generation_config={"max_new_tokens": 256}
+            generation_config,
         )
         
         return ModelOutput(text=response)

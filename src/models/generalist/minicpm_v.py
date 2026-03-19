@@ -44,10 +44,23 @@ class MiniCPMVModel(BaseRadiologyModel):
         
         logger.info(f"Loading {self.model_name}...")
         
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name, 
-            trust_remote_code=True
-        )
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name, 
+                trust_remote_code=True
+            )
+        except Exception as e:
+            if "401" in str(e) or "gated" in str(e).lower():
+                raise RuntimeError(
+                    f"MiniCPM-V ({self.model_name}) is a gated model on HuggingFace.\n"
+                    "To access it:\n"
+                    "  1. Visit https://huggingface.co/openbmb/MiniCPM-V-2_6 and request access\n"
+                    "  2. Run: huggingface-cli login\n"
+                    "  3. Enter your HF token\n"
+                    "If you don't want to do this, remove 'minicpm-v' from MODELS_TO_TEST."
+                ) from e
+            raise
+        
         self.model = AutoModel.from_pretrained(
             self.model_name,
             trust_remote_code=True,

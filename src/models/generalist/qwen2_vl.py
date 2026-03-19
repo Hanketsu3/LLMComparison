@@ -82,7 +82,9 @@ class Qwen2VLModel(BaseRadiologyModel):
         inputs = inputs.to(self.device)
         
         output_ids = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens)
-        output_text = self.processor.batch_decode(output_ids, skip_special_tokens=True)[0]
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = output_ids[:, inputs.input_ids.shape[1]:]
+        output_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         
         return ModelOutput(text=output_text)
     
@@ -113,6 +115,8 @@ class Qwen2VLModel(BaseRadiologyModel):
         inputs = inputs.to(self.device)
         
         output_ids = self.model.generate(**inputs, max_new_tokens=256)
-        output_text = self.processor.batch_decode(output_ids, skip_special_tokens=True)[0]
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = output_ids[:, inputs.input_ids.shape[1]:]
+        output_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         
         return ModelOutput(text=output_text)

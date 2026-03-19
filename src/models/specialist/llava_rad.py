@@ -76,7 +76,9 @@ class LLaVARadModel(BaseRadiologyModel):
         inputs = self.processor(text=prompt, images=img, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, do_sample=False)
         
-        text = self.processor.decode(outputs[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = outputs[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         return ModelOutput(text=text)
     
     def answer_question(
@@ -95,5 +97,7 @@ class LLaVARadModel(BaseRadiologyModel):
         inputs = self.processor(text=prompt, images=img, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_new_tokens=256)
         
-        text = self.processor.decode(outputs[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = outputs[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         return ModelOutput(text=text)

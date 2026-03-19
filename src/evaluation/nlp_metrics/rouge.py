@@ -17,6 +17,12 @@ class ROUGEEvaluator(BaseEvaluator):
         **kwargs
     ) -> Dict[str, float]:
         """Compute ROUGE scores."""
+        # Guard against empty predictions
+        non_empty = [(p, r) for p, r in zip(predictions, references) if p and p.strip()]
+        if not non_empty:
+            return {"rouge_1": 0.0, "rouge_2": 0.0, "rouge_l": 0.0}
+        predictions, references = zip(*non_empty)
+        predictions, references = list(predictions), list(references)
         try:
             from evaluate import load
             rouge = load("rouge")

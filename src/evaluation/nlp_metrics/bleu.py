@@ -18,6 +18,12 @@ class BLEUEvaluator(BaseEvaluator):
         **kwargs
     ) -> Dict[str, float]:
         """Compute BLEU score."""
+        # Guard against empty predictions
+        non_empty = [(p, r) for p, r in zip(predictions, references) if p and p.strip()]
+        if not non_empty:
+            return {"bleu": 0.0, "bleu_1": 0.0, "bleu_4": 0.0}
+        predictions, references = zip(*non_empty)
+        predictions, references = list(predictions), list(references)
         try:
             from evaluate import load
             bleu = load("bleu")

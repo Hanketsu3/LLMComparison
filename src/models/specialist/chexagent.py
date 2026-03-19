@@ -69,7 +69,9 @@ class CheXagentModel(BaseRadiologyModel):
         inputs = self.processor(images=img, text=prompt, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens)
         
-        text = self.processor.decode(outputs[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = outputs[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         return ModelOutput(text=text, metadata={"model": self.model_name})
     
     def answer_question(
@@ -86,7 +88,9 @@ class CheXagentModel(BaseRadiologyModel):
         inputs = self.processor(images=img, text=question, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_new_tokens=256)
         
-        text = self.processor.decode(outputs[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = outputs[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         return ModelOutput(text=text)
     
     def ground_finding(
@@ -105,7 +109,9 @@ class CheXagentModel(BaseRadiologyModel):
         inputs = self.processor(images=img, text=prompt, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_new_tokens=256)
         
-        text = self.processor.decode(outputs[0], skip_special_tokens=True)
+        # Only decode the NEW tokens (trim input tokens)
+        generated_ids = outputs[:, inputs['input_ids'].shape[1]:]
+        text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         bboxes = self._parse_bounding_boxes(text)
         
         return ModelOutput(text=text, bounding_boxes=bboxes)

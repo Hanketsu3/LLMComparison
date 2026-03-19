@@ -172,6 +172,19 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
         needs_4bit=True,
         default_kwargs={"load_in_4bit": True},
     ),
+    "med-llama3-vision": ModelInfo(
+        name="med-llama3-vision",
+        display_name="Med-Llama3-Vision",
+        category=ModelCategory.DOMAIN_ADAPTIVE,
+        cost=ModelCost.FREE,
+        module_path="src.models.generalist.llama3",
+        class_name="Llama3Model",
+        params="11B",
+        description="Medical fine-tune of Llama-3.2",
+        colab_t4_native=False,
+        needs_4bit=True,
+        default_kwargs={"model_name": "Cannae-AI/MedicalLlama3.2-vision-11B-IT", "load_in_4bit": True},
+    ),
     # biomedgpt removed: text-only, no multimodal support
     
     # --- Specialist (Free) ---

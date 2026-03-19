@@ -81,6 +81,16 @@ pip install -r requirements.txt
 ```
 
 ### Adım 3: Deneye Başlayın
+
+**Seçenek 1: Tam Deney Pipeline'ı — Colab Üzerinde (Önerilen)**
+**`notebooks/run_full_experiment.ipynb`** dosyasını Colab'da açın (T4 GPU ile). Bu notebook uçtan uca:
+1. HuggingFace'ten gerçek VQA-RAD verisini indirir.
+2. 8 ücretsiz açık kaynak modeli sırayla yükler, çıkarım yapar ve GPU temizler.
+3. BLEU, ROUGE-L, VQA Accuracy, Halüsinasyon Oranı metriklerini otomatik hesaplar.
+4. Prior Bias Testi (siyah görüntü deneyi) ve Prompt Ablasyonu yapar.
+5. Sonuçları JSON + CSV olarak kaydeder.
+
+**Seçenek 2: Öğrenci Şablonu ile Kendi Deneyini Kurgulama**
 **`notebooks/main_experiment.ipynb`** dosyasını açın. Bu notebook, adım adım sizi yönlendirecektir:
 1.  Kütüphaneleri yükleme ve kurulum.
 2.  Açık kaynak bir model (Qwen2-VL) ile test yapma.

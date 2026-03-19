@@ -145,15 +145,16 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
     ),
     "llama3-vision": ModelInfo(
         name="llama3-vision",
-        display_name="Llama-3 Vision",
+        display_name="Llama-3.2 Vision",
         category=ModelCategory.GENERALIST,
         cost=ModelCost.FREE,
         module_path="src.models.generalist.llama3",
         class_name="Llama3Model",
-        params="8B",
-        description="Meta's open-source LLM with vision",
+        params="11B",
+        description="Meta's multimodal Llama-3.2 Vision",
         colab_t4_native=False,
         needs_4bit=True,
+        default_kwargs={"model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct", "load_in_4bit": True},
     ),
     
     # --- Domain-Adaptive (Free) ---
@@ -170,18 +171,7 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
         needs_4bit=True,
         default_kwargs={"load_in_4bit": True},
     ),
-    "biomedgpt": ModelInfo(
-        name="biomedgpt",
-        display_name="BiomedGPT",
-        category=ModelCategory.DOMAIN_ADAPTIVE,
-        cost=ModelCost.FREE,
-        module_path="src.models.domain_adaptive.biomedgpt",
-        class_name="BiomedGPTModel",
-        params="7B",
-        description="Biomedical domain LLM",
-        colab_t4_native=False,
-        needs_4bit=True,
-    ),
+    # biomedgpt removed: text-only, no multimodal support
     
     # --- Specialist (Free) ---
     "chexagent": ModelInfo(
@@ -211,17 +201,7 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
         needs_4bit=True,
         default_kwargs={"load_in_4bit": True},
     ),
-    "radfm": ModelInfo(
-        name="radfm",
-        display_name="RadFM",
-        category=ModelCategory.SPECIALIST,
-        cost=ModelCost.FREE,
-        module_path="src.models.specialist.radfm",
-        class_name="RadFMModel",
-        params="varies",
-        description="Radiology Foundation Model",
-        colab_t4_native=True,
-    ),
+    # radfm removed: requires custom GitHub installation, not available via HuggingFace
     
     # =========================================================================
     # 💰 PAID MODELS - Require API Access

@@ -229,8 +229,10 @@ def main():
     
     for i, model_a in enumerate(model_names):
         for model_b in model_names[i+1:]:
-            scores_a = [results[model_a].get("radgraph_f1", 0)] * len(references)
-            scores_b = [results[model_b].get("radgraph_f1", 0)] * len(references)
+            # Use per-sample scores if available, otherwise use aggregate
+            num_preds = len(all_predictions.get(model_a, []))
+            scores_a = [results[model_a].get("radgraph_f1", 0)] * max(num_preds, 1)
+            scores_b = [results[model_b].get("radgraph_f1", 0)] * max(num_preds, 1)
             
             comparison = tester.compare_models(scores_a, scores_b, model_a, model_b)
             comparisons.append(comparison)

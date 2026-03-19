@@ -46,13 +46,24 @@ class Phi3VisionModel(BaseRadiologyModel):
             self.model_name, 
             trust_remote_code=True
         )
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            trust_remote_code=True,
-            torch_dtype="auto",
-            device_map="auto",
-            _attn_implementation="flash_attention_2" if self.device == "cuda" else "eager",
-        )
+        # Try flash_attention_2 first, fall back to eager (Colab compatibility)
+        try:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                trust_remote_code=True,
+                torch_dtype="auto",
+                device_map="auto",
+                _attn_implementation="flash_attention_2",
+            )
+        except Exception:
+            logger.info("flash_attention_2 not available, using eager attention")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                trust_remote_code=True,
+                torch_dtype="auto",
+                device_map="auto",
+                _attn_implementation="eager",
+            )
         
         self._is_loaded = True
         logger.info(f"Loaded {self.model_name}")

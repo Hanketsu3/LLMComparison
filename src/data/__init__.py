@@ -11,6 +11,10 @@ from src.data.ms_cxr import MSCXRDataset
 from src.data.vindr_cxr import VinDrCXRDataset
 from src.data.padchest import PadChestDataset
 
+# HuggingFace auto-download datasets (no local setup needed)
+from src.data.hf_vqa_rad import HFVQARADDataset
+from src.data.hf_iu_xray import HFIUXRayDataset
+
 __all__ = [
     "BaseRadiologyDataset",
     "MIMICCXRDataset",
@@ -20,4 +24,8 @@ __all__ = [
     "MSCXRDataset",
     "VinDrCXRDataset",
     "PadChestDataset",
+    # HuggingFace
+    "HFVQARADDataset",
+    "HFIUXRayDataset",
 ]
+

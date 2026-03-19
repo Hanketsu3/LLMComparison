@@ -13,6 +13,10 @@ pandas>=2.0.0
 numpy>=1.24.0
 pyyaml>=6.0
 tqdm>=4.66.0
+datasets>=2.14.0
+
+# Qwen2-VL utilities
+qwen-vl-utils>=0.0.2
 
 # Evaluation
 evaluate>=0.4.0
@@ -26,3 +30,4 @@ google-generativeai>=0.3.0
 # Development
 pytest>=7.0.0
 # radgraph-benchmark>=0.0.3 (Causes Git clone error)
+

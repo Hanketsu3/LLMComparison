@@ -1,7 +1,7 @@
 """
-Llama-3 Vision Model Wrapper
+Llama-3.2 Vision Model Wrapper
 
-Meta's Llama-3 for radiology tasks (local deployment).
+Meta's Llama-3.2 Vision for radiology tasks (multimodal, local deployment).
 """
 
 import logging
@@ -13,11 +13,17 @@ logger = logging.getLogger(__name__)
 
 
 class Llama3Model(BaseRadiologyModel):
-    """Llama-3 model wrapper for local deployment."""
+    """
+    Llama-3.2 Vision model wrapper for local deployment.
+    
+    Models available:
+    - meta-llama/Llama-3.2-11B-Vision-Instruct (11B, multimodal)
+    - meta-llama/Llama-3.2-90B-Vision-Instruct (90B, multimodal)
+    """
     
     def __init__(
         self,
-        model_name: str = "meta-llama/Llama-3-8B-Instruct",
+        model_name: str = "meta-llama/Llama-3.2-11B-Vision-Instruct",
         device: str = "cuda",
         load_in_4bit: bool = True,
         max_new_tokens: int = 512,
@@ -28,10 +34,10 @@ class Llama3Model(BaseRadiologyModel):
         self.max_new_tokens = max_new_tokens
     
     def load(self) -> None:
-        """Load the model using transformers."""
+        """Load the Llama-3.2 Vision model."""
         try:
             import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+            from transformers import MllamaForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
         except ImportError:
             raise ImportError("Please install: pip install transformers torch")
         
@@ -44,8 +50,8 @@ class Llama3Model(BaseRadiologyModel):
                 bnb_4bit_compute_dtype=torch.float16,
             )
         
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+        self.model = MllamaForConditionalGeneration.from_pretrained(
             self.model_name,
             quantization_config=quantization_config,
             device_map="auto",
@@ -61,22 +67,29 @@ class Llama3Model(BaseRadiologyModel):
         prompt: Optional[str] = None,
         **kwargs
     ) -> ModelOutput:
-        """Generate radiology report (text-only for base Llama-3)."""
+        """Generate radiology report from image."""
         if not self._is_loaded:
             self.load()
         
-        # Note: Base Llama-3 doesn't support images directly
-        # This would need LLaVA or similar multimodal adapter
-        prompt = prompt or "Generate a radiology report based on the image description."
+        img = self.preprocess_image(image)
+        prompt = prompt or "Generate a detailed radiology report for this chest X-ray. Include FINDINGS and IMPRESSION sections."
         
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(
-            **inputs,
-            max_new_tokens=self.max_new_tokens,
-            do_sample=False,
-        )
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": prompt},
+                ],
+            }
+        ]
         
-        text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        input_text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
+        inputs = self.processor(images=img, text=input_text, return_tensors="pt").to(self.model.device)
+        
+        output = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, do_sample=False)
+        text = self.processor.decode(output[0], skip_special_tokens=True)
+        
         return ModelOutput(text=text)
     
     def answer_question(
@@ -85,13 +98,26 @@ class Llama3Model(BaseRadiologyModel):
         question: str,
         **kwargs
     ) -> ModelOutput:
-        """Answer a VQA question."""
+        """Answer a VQA question about the image."""
         if not self._is_loaded:
             self.load()
         
-        prompt = f"Question: {question}\nAnswer:"
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=256)
+        img = self.preprocess_image(image)
         
-        text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": question},
+                ],
+            }
+        ]
+        
+        input_text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
+        inputs = self.processor(images=img, text=input_text, return_tensors="pt").to(self.model.device)
+        
+        output = self.model.generate(**inputs, max_new_tokens=256, do_sample=False)
+        text = self.processor.decode(output[0], skip_special_tokens=True)
+        
         return ModelOutput(text=text)

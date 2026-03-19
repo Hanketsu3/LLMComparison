@@ -49,35 +49,28 @@ class InternVL2Model(BaseRadiologyModel):
             self.model_name, 
             trust_remote_code=True
         )
-        
+        load_kwargs = {
+            "trust_remote_code": True,
+            "torch_dtype": torch.bfloat16,
+        }
         is_2b = "2B" in self.model_name or "2b" in self.model_name
         
         if self.load_in_4bit and not is_2b:
-            # 4-bit quantization for large models (8B+)
-            # IMPORTANT: do NOT use device_map with BnB + trust_remote_code
-            # as it triggers the meta tensor bug. Load to GPU 0 directly.
             from transformers import BitsAndBytesConfig
-            bnb_config = BitsAndBytesConfig(
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.bfloat16,
                 bnb_4bit_use_double_quant=True,
             )
+            load_kwargs["device_map"] = "auto"
             self.model = AutoModel.from_pretrained(
                 self.model_name,
-                trust_remote_code=True,
-                torch_dtype=torch.bfloat16,
-                quantization_config=bnb_config,
-                device_map={"": 0},  # BnB requires device_map, but forces GPU before init
-                low_cpu_mem_usage=False,  # Do NOT defer weight init
+                **load_kwargs,
             ).eval()
         else:
-            # For 2B (and any model without 4-bit): load to CPU first, then move to CUDA
-            # This fully materializes all tensors before any CUDA ops — avoids meta tensor error
             self.model = AutoModel.from_pretrained(
                 self.model_name,
-                trust_remote_code=True,
-                torch_dtype=torch.bfloat16,
-                low_cpu_mem_usage=False,   # Materialize on CPU, no meta device
+                **load_kwargs,
             ).eval().cuda()
         
         self._is_loaded = True

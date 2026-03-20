@@ -119,6 +119,7 @@ class Phi3VisionModel(BaseRadiologyModel):
             **inputs,
             max_new_tokens=self.max_new_tokens,
             do_sample=False,
+            use_cache=False,
             eos_token_id=self.processor.tokenizer.eos_token_id,
         )
         
@@ -149,7 +150,7 @@ class Phi3VisionModel(BaseRadiologyModel):
         )
         
         inputs = self.processor(prompt_text, [img], return_tensors="pt").to(self.device)
-        output = self.model.generate(**inputs, max_new_tokens=50)
+        output = self.model.generate(**inputs, max_new_tokens=50, use_cache=False)
         
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = output[:, inputs['input_ids'].shape[1]:]

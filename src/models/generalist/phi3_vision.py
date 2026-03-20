@@ -62,6 +62,11 @@ class Phi3VisionModel(BaseRadiologyModel):
                             cache.update(key_states, value_states, layer_idx)
                     return cache
                 transformers.cache_utils.DynamicCache.from_legacy_cache = from_legacy_cache
+            
+            if not hasattr(transformers.cache_utils.DynamicCache, "get_max_length"):
+                def get_max_length(self):
+                    return None
+                transformers.cache_utils.DynamicCache.get_max_length = get_max_length
         
         
         # Try flash_attention_2 first, fall back to eager (Colab compatibility)

@@ -222,3 +222,45 @@ internvl2-8b: 100%
       avg_time_per_sample: 3.4800
       errors: 0
    🧹 GPU temizlendi.
+
+============================================================
+🤖 Model: phi3-vision
+============================================================
+   ⏳ Model indiriliyor ve yükleniyor...
+/usr/local/lib/python3.12/dist-packages/transformers/models/auto/image_processing_auto.py:602: FutureWarning: The image_processor_class argument is deprecated and will be removed in v4.42. Please use `slow_image_processor_class`, or `fast_image_processor_class` instead
+  warnings.warn(
+Loading checkpoint shards: 100%
+ 2/2 [00:29<00:00, 14.17s/it]
+   ✅ Model hazır!
+   ⏳ 451 örnek üzerinde çıkarım yapılıyor...
+phi3-vision: 100%
+ 451/451 [1:00:43<00:00,  8.01s/it]
+The `seen_tokens` attribute is deprecated and will be removed in v4.41. Use the `cache_position` model input instead.
+WARNING:transformers_modules.microsoft.Phi-3.5-vision-instruct.12b77fb40b63a2c73c68243d3f767aab688a1b2a.modeling_phi3_v:You are not running the flash-attention implementation, expect numerical differences.
+   📊 Metrikler hesaplanıyor...
+Downloading builder script: 
+ 5.94k/? [00:00<00:00, 415kB/s]
+Downloading extra modules: 
+ 4.07k/? [00:00<00:00, 287kB/s]
+Downloading extra modules: 
+ 3.34k/? [00:00<00:00, 295kB/s]
+Downloading builder script: 
+ 6.14k/? [00:00<00:00, 437kB/s]
+   ✅ Sonuçlar:
+      accuracy: 0.4435
+      closed_accuracy: 0.6454
+      open_accuracy: 0.1900
+      closed_total: 251
+      open_total: 200
+      total: 451
+      bleu: 0.0000
+      bleu_1: 0.0147
+      bleu_4: 0.0000
+      rouge_1: 0.0431
+      rouge_2: 0.0007
+      rouge_l: 0.0429
+      hallucination_rate: 1.0000
+      total_time_sec: 3630.9500
+      avg_time_per_sample: 8.0500
+      errors: 0
+   🧹 GPU temizlendi.

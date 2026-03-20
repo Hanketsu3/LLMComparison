@@ -1,6 +1,36 @@
 # Specialist (Radiology-Expert) Models Configuration
 
 models:
+  # GOT-OCR 2.0
+  got_ocr2:
+    name: "stepfun-ai/GOT-OCR-2.0-hf"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
+
+  # Nougat Base
+  nougat_base:
+    name: "facebook/nougat-base"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
+
+  # MatCha ChartQA
+  matcha_chartqa:
+    name: "google/matcha-chartqa"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
+
   # CheXagent (Stanford AIMI)
   chexagent:
     name: "StanfordAIMI/CheXagent-8b"

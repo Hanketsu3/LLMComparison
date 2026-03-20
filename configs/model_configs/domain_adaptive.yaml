@@ -1,6 +1,36 @@
 # Domain-Adaptive Models Configuration
 
 models:
+  # Qwen2-VL OCR (Domain-Adaptive)
+  qwen2_vl_ocr_2b:
+    name: "prithivMLmods/Qwen2-VL-OCR-2B-Instruct"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
+
+  # Latxa Qwen3-VL (Language-adapted Domain model)
+  latxa_qwen3_vl_2b:
+    name: "HiTZ/Latxa-Qwen3-VL-2B-Instruct"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+
+  # MedGemma 4B IT
+  medgemma_4b_it:
+    name: "google/medgemma-4b-it"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+
   # Med-PaLM 2 (via Google API)
   med_palm:
     name: "med-palm-2"
@@ -22,7 +52,7 @@ models:
 
   # LLaVA-Med (Local)
   llava_med:
-    name: "microsoft/llava-med-v1.5-mistral-7b"
+    name: "microsoft/llava-med-v1.5-vicuna-7b"
     type: "local"
     provider: "huggingface"
     model_path: "${LLAVA_MED_PATH}"

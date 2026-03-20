@@ -49,9 +49,9 @@ download_llava_med() {
 from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 print('Downloading LLaVA-Med...')
-processor = AutoProcessor.from_pretrained('microsoft/llava-med-v1.5-mistral-7b')
+processor = AutoProcessor.from_pretrained('microsoft/llava-med-v1.5-vicuna-7b')
 model = LlavaForConditionalGeneration.from_pretrained(
-    'microsoft/llava-med-v1.5-mistral-7b',
+    'microsoft/llava-med-v1.5-vicuna-7b',
     torch_dtype='auto'
 )
 print('✅ LLaVA-Med downloaded successfully')

@@ -8,6 +8,7 @@ from src.models.generalist.qwen2_vl import Qwen2VLModel
 from src.models.generalist.internvl2 import InternVL2Model
 from src.models.generalist.llava_next import LLaVANextModel
 from src.models.generalist.phi3_vision import Phi3VisionModel
+from src.models.generalist.generic_vision_chat import GenericVisionChatModel
 
 __all__ = [
     "GPT4VModel", 
@@ -18,4 +19,5 @@ __all__ = [
     "InternVL2Model",
     "LLaVANextModel",
     "Phi3VisionModel",
+    "GenericVisionChatModel",
 ]

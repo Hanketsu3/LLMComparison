@@ -1,6 +1,43 @@
 # Generalist Models Configuration
 
 models:
+  qwen3_vl_2b:
+    name: "Qwen/Qwen3-VL-2B-Instruct"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+
+  qwen2_5_vl_3b:
+    name: "Qwen/Qwen2.5-VL-3B-Instruct"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+
+  qwen2_vl_2b:
+    name: "Qwen/Qwen2-VL-2B-Instruct"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
+
+  phi3_5_vision:
+    name: "microsoft/Phi-3.5-vision-instruct"
+    type: "local"
+    provider: "huggingface"
+
+  smolvlm2_2b:
+    name: "HuggingFaceTB/SmolVLM2-2.2B-Instruct"
+    type: "local"
+    provider: "huggingface"
+
   # GPT-4 Vision
   gpt4v:
     name: "gpt-4-vision-preview"

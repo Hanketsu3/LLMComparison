@@ -17,7 +17,7 @@ class LLaVAMedModel(BaseRadiologyModel):
     
     def __init__(
         self,
-        model_name: str = "microsoft/llava-med-v1.5-mistral-7b",
+        model_name: str = "microsoft/llava-med-v1.5-vicuna-7b",
         device: str = "cuda",
         load_in_4bit: bool = True,
         max_new_tokens: int = 512,

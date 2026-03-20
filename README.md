@@ -114,6 +114,35 @@ python experiments/run_comparison.py --config configs/experiment_configs/vqa_exp
 
 ---
 
+## ⚠️ Bilinen Sorunlar ve Model Durumu
+
+### 🎯 Lane Bazlı Deney Tasarımı (Güncel)
+
+### ✅ Generalist Lane (5+1 model)
+- **Qwen3-VL-2B-Instruct**
+- **Qwen2.5-VL-3B-Instruct**
+- **Qwen2-VL-2B-Instruct**
+- **Phi-3.5-Vision-Instruct**
+- **SmolVLM2-2.2B-Instruct**
+- **Llama-3.2-11B-Vision-Instruct** (gated erişim aktif)
+
+### ✅ Domain-Adaptive Lane (3 model)
+- **prithivMLmods/Qwen2-VL-OCR-2B-Instruct**
+- **HiTZ/Latxa-Qwen3-VL-2B-Instruct**
+- **google/medgemma-4b-it**
+
+### ✅ Specialist Lane (3 model)
+- **stepfun-ai/GOT-OCR-2.0-hf**
+- **facebook/nougat-base**
+- **google/matcha-chartqa**
+
+### Notlar
+- Deney, lane bazlı adil kıyaslama için tasarlandı: Generalist vs Domain-Adaptive vs Specialist.
+- Specialist modeller dar göreve odaklı olduğu için ana generalist tablolarından ayrı yorumlanmalıdır.
+- Colab T4 stabilitesi için 2B-4B modeller önceliklendirilmiştir; daha büyük modellerde 4-bit önerilir.
+
+---
+
 ## 🔮 Gelecek Çalışmalar (TODO)
 - [ ] **MedGemma Entegrasyonu:** Google'ın açık kaynaklı MedGemma modeli ile kıyaslama ekle.
 - [ ] **Daha Fazla Metrik:** BertScore ve BLEURT gibi semantik metrikleri dahil et.

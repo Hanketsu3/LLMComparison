@@ -1,0 +1,224 @@
+============================================================
+🤖 Model: qwen2-vl-2b
+============================================================
+   ⏳ Model indiriliyor ve yükleniyor...
+preprocessor_config.json: 100%
+ 347/347 [00:00<00:00, 38.2kB/s]
+chat_template.json: 
+ 1.05k/? [00:00<00:00, 107kB/s]
+The image processor of type `Qwen2VLImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+config.json: 
+ 1.20k/? [00:00<00:00, 95.4kB/s]
+tokenizer_config.json: 
+ 4.19k/? [00:00<00:00, 396kB/s]
+vocab.json: 
+ 2.78M/? [00:00<00:00, 75.3MB/s]
+merges.txt: 
+ 1.67M/? [00:00<00:00, 51.3MB/s]
+tokenizer.json: 
+ 7.03M/? [00:00<00:00, 104MB/s]
+model.safetensors.index.json: 
+ 56.4k/? [00:00<00:00, 4.50MB/s]
+Download complete: 100%
+ 4.42G/4.42G [00:31<00:00, 137MB/s]
+Fetching 2 files: 100%
+ 2/2 [00:31<00:00, 31.27s/it]
+Loading weights: 100%
+ 729/729 [00:08<00:00, 610.86it/s, Materializing param=model.visual.patch_embed.proj.weight]
+generation_config.json: 100%
+ 272/272 [00:00<00:00, 18.8kB/s]
+   ✅ Model hazır!
+   ⏳ 451 örnek üzerinde çıkarım yapılıyor...
+qwen2-vl-2b: 100%
+ 451/451 [03:55<00:00,  1.81it/s]
+   📊 Metrikler hesaplanıyor...
+Downloading builder script: 
+ 5.94k/? [00:00<00:00, 591kB/s]
+Downloading extra modules: 
+ 4.07k/? [00:00<00:00, 467kB/s]
+Downloading extra modules: 
+ 3.34k/? [00:00<00:00, 343kB/s]
+Downloading builder script: 
+ 6.14k/? [00:00<00:00, 632kB/s]
+   ✅ Sonuçlar:
+      accuracy: 0.4324
+      closed_accuracy: 0.5378
+      open_accuracy: 0.3000
+      closed_total: 251
+      open_total: 200
+      total: 451
+      bleu: 0.0000
+      bleu_1: 0.3385
+      bleu_4: 0.0000
+      rouge_1: 0.4042
+      rouge_2: 0.0044
+      rouge_l: 0.4042
+      hallucination_rate: 1.0000
+      total_time_sec: 222.8600
+      avg_time_per_sample: 0.4900
+      errors: 0
+   🧹 GPU temizlendi.
+
+============================================================
+🤖 Model: qwen2-vl-7b
+============================================================
+   ⏳ Model indiriliyor ve yükleniyor...
+preprocessor_config.json: 100%
+ 347/347 [00:00<00:00, 20.7kB/s]
+chat_template.json: 
+ 1.05k/? [00:00<00:00, 102kB/s]
+config.json: 
+ 1.20k/? [00:00<00:00, 129kB/s]
+tokenizer_config.json: 
+ 4.19k/? [00:00<00:00, 442kB/s]
+vocab.json: 
+ 2.78M/? [00:00<00:00, 67.8MB/s]
+merges.txt: 
+ 1.67M/? [00:00<00:00, 53.7MB/s]
+tokenizer.json: 
+ 7.03M/? [00:00<00:00, 116MB/s]
+model.safetensors.index.json: 
+ 56.5k/? [00:00<00:00, 5.35MB/s]
+Download complete: 100%
+ 16.6G/16.6G [19:03<00:00, 37.9MB/s]
+Fetching 5 files: 100%
+ 5/5 [19:03<00:00, 472.09s/it]
+Loading weights: 100%
+ 730/730 [01:10<00:00, 603.46it/s, Materializing param=model.visual.patch_embed.proj.weight]
+generation_config.json: 100%
+ 244/244 [00:00<00:00, 13.7kB/s]
+   ✅ Model hazır!
+   ⏳ 451 örnek üzerinde çıkarım yapılıyor...
+qwen2-vl-7b: 100%
+ 451/451 [10:57<00:00,  1.43s/it]
+   📊 Metrikler hesaplanıyor...
+   ✅ Sonuçlar:
+      accuracy: 0.5521
+      closed_accuracy: 0.7052
+      open_accuracy: 0.3600
+      closed_total: 251
+      open_total: 200
+      total: 451
+      bleu: 0.0000
+      bleu_1: 0.3842
+      bleu_4: 0.0000
+      rouge_1: 0.5352
+      rouge_2: 0.0126
+      rouge_l: 0.5345
+      hallucination_rate: 0.8000
+      total_time_sec: 645.5600
+      avg_time_per_sample: 1.4300
+      errors: 0
+   🧹 GPU temizlendi.
+
+====================================================
+   📊 Metrikler hesaplanıyor...
+   ✅ Sonuçlar:
+      accuracy: 0.0000
+      closed_accuracy: 0.0000
+      open_accuracy: 0.0000
+      closed_total: 251
+      open_total: 200
+      total: 451
+      bleu: 0.0000
+      bleu_1: 0.0000
+      bleu_4: 0.0000
+      rouge_1: 0.0000
+      rouge_2: 0.0000
+      rouge_l: 0.0000
+      hallucination_rate: 0
+      total_time_sec: 0
+      avg_time_per_sample: 0.0000
+      errors: 451
+   🧹 GPU temizlendi.
+
+
+============================================================
+🤖 Model: internvl2-2b
+============================================================
+   ⏳ Model indiriliyor ve yükleniyor...
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:48: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+InternLM2ForCausalLM has generative capabilities, as `prepare_inputs_for_generation` is explicitly overwritten. However, it doesn't directly inherit from `GenerationMixin`. From 👉v4.50👈 onwards, `PreTrainedModel` will NOT inherit from `GenerationMixin`, and this model will lose the ability to call `generate` and other related functions.
+  - If you're using `trust_remote_code=True`, you can get rid of this warning by loading the model with an auto class. See https://huggingface.co/docs/transformers/en/model_doc/auto#auto-classes
+  - If you are the owner of the model architecture code, please modify your model class such that it inherits from `GenerationMixin` (after `PreTrainedModel`, otherwise you'll get an exception).
+  - If you are not the owner of the model architecture class, please contact the model code owner to update it.
+FlashAttention2 is not installed.
+Warning: Flash attention is not available, using eager attention instead.
+   ✅ Model hazır!
+   ⏳ 451 örnek üzerinde çıkarım yapılıyor...
+internvl2-2b: 100%
+ 451/451 [08:05<00:00,  1.10s/it]
+   📊 Metrikler hesaplanıyor...
+Downloading builder script: 
+ 5.94k/? [00:00<00:00, 544kB/s]
+Downloading extra modules: 
+ 4.07k/? [00:00<00:00, 372kB/s]
+Downloading extra modules: 
+ 3.34k/? [00:00<00:00, 330kB/s]
+Downloading builder script: 
+ 6.14k/? [00:00<00:00, 550kB/s]
+   ✅ Sonuçlar:
+      accuracy: 0.5188
+      closed_accuracy: 0.6972
+      open_accuracy: 0.2950
+      closed_total: 251
+      open_total: 200
+      total: 451
+      bleu: 0.0000
+      bleu_1: 0.0468
+      bleu_4: 0.0000
+      rouge_1: 0.5162
+      rouge_2: 0.0166
+      rouge_l: 0.5168
+      hallucination_rate: 1.0000
+      total_time_sec: 472.9000
+      avg_time_per_sample: 1.0500
+      errors: 0
+   🧹 GPU temizlendi.
+
+============================================================
+🤖 Model: internvl2-8b
+============================================================
+   ⏳ Model indiriliyor ve yükleniyor...
+FlashAttention2 is not installed.
+model.safetensors.index.json: 
+ 51.2k/? [00:00<00:00, 2.55MB/s]
+Fetching 4 files: 100%
+ 4/4 [02:18<00:00, 59.51s/it]
+model-00002-of-00004.safetensors: 100%
+ 4.92G/4.92G [02:18<00:00, 263MB/s]
+model-00003-of-00004.safetensors: 100%
+ 4.92G/4.92G [02:05<00:00, 90.7MB/s]
+model-00001-of-00004.safetensors: 100%
+ 4.94G/4.94G [02:04<00:00, 47.4MB/s]
+model-00004-of-00004.safetensors: 100%
+ 1.38G/1.38G [01:30<00:00, 10.9MB/s]
+Warning: Flash attention is not available, using eager attention instead.
+Loading checkpoint shards: 100%
+ 4/4 [01:04<00:00, 14.07s/it]
+generation_config.json: 100%
+ 115/115 [00:00<00:00, 5.84kB/s]
+   ✅ Model hazır!
+   ⏳ 451 örnek üzerinde çıkarım yapılıyor...
+internvl2-8b: 100%
+ 451/451 [26:23<00:00,  3.55s/it]
+   📊 Metrikler hesaplanıyor...
+   ✅ Sonuçlar:
+      accuracy: 0.5610
+      closed_accuracy: 0.7092
+      open_accuracy: 0.3750
+      closed_total: 251
+      open_total: 200
+      total: 451
+      bleu: 0.0000
+      bleu_1: 0.0338
+      bleu_4: 0.0000
+      rouge_1: 0.5241
+      rouge_2: 0.0174
+      rouge_l: 0.5246
+      hallucination_rate: 1.0000
+      total_time_sec: 1570.1500
+      avg_time_per_sample: 3.4800
+      errors: 0
+   🧹 GPU temizlendi.

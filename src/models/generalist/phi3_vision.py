@@ -67,6 +67,10 @@ class Phi3VisionModel(BaseRadiologyModel):
                 def get_max_length(self):
                     return None
                 transformers.cache_utils.DynamicCache.get_max_length = get_max_length
+                try:
+                    transformers.cache_utils.Cache.get_max_length = get_max_length
+                except Exception:
+                    pass
         
         
         # Try flash_attention_2 first, fall back to eager (Colab compatibility)
@@ -150,7 +154,7 @@ class Phi3VisionModel(BaseRadiologyModel):
         )
         
         inputs = self.processor(prompt_text, [img], return_tensors="pt").to(self.device)
-        output = self.model.generate(**inputs, max_new_tokens=50, use_cache=False)
+        output = self.model.generate(**inputs, max_new_tokens=50)
         
         # Only decode the NEW tokens (trim input tokens)
         generated_ids = output[:, inputs['input_ids'].shape[1]:]

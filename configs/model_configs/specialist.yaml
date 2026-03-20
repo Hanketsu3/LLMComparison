@@ -1,42 +1,19 @@
-# Specialist (Radiology-Expert) Models Configuration
+# ============================================================================
+# SPECIALIST MODELS - MAIN BENCHMARK (3 Models)
+# ============================================================================
+# Radiology-expert models specialized for chest X-ray analysis and radiology
+# report generation, with advanced grounding capabilities.
+# 
+# NOTE: Specialist models in EXTRA TRACK moved to: extra_track_ocr.yaml
+#   - GOT-OCR-2 (document OCR, not radiology)
+#   - Nougat (PDF parsing, not radiology)
+#   - MatCha (chart QA, not radiology)
 
 models:
-  # GOT-OCR 2.0
-  got_ocr2:
-    name: "stepfun-ai/GOT-OCR-2.0-hf"
-    type: "local"
-    provider: "huggingface"
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: false
-
-  # Nougat Base
-  nougat_base:
-    name: "facebook/nougat-base"
-    type: "local"
-    provider: "huggingface"
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: false
-
-  # MatCha ChartQA
-  matcha_chartqa:
-    name: "google/matcha-chartqa"
-    type: "local"
-    provider: "huggingface"
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: false
-
-  # CheXagent (Stanford AIMI)
   chexagent:
     name: "StanfordAIMI/CheXagent-8b"
     type: "local"
     provider: "huggingface"
-    model_path: "${CHEXAGENT_PATH}"
     
     # Architecture
     architecture:
@@ -65,46 +42,10 @@ models:
       - "abnormality_detection"
       - "phrase_grounding"
 
-  # MAIRA-2 (Microsoft)
-  maira2:
-    name: "microsoft/maira-2"
-    type: "local"
-    provider: "huggingface"
-    model_path: "${MAIRA2_PATH}"
-    
-    # Architecture
-    architecture:
-      vision_encoder: "RadDINO"
-      language_model: "Vicuna-7B"
-      grounding_module: true
-    
-    # Model loading
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: true
-    
-    # Generation
-    generation:
-      max_new_tokens: 512
-      temperature: 0.0
-    
-    # MAIRA-2 specific
-    capabilities:
-      - "report_generation"
-      - "grounding"
-      - "prior_comparison"
-    
-    grounding:
-      output_format: "bbox"  # bbox or mask
-      confidence_threshold: 0.5
-
-  # LLaVA-Rad
   llava_rad:
     name: "microsoft/llava-rad"
     type: "local"
     provider: "huggingface"
-    model_path: "${LLAVA_RAD_PATH}"
     
     # Architecture
     architecture:
@@ -116,11 +57,13 @@ models:
       device_map: "auto"
       torch_dtype: "float16"
       load_in_4bit: true
+      use_flash_attention: true
     
-    # Generation
+    # Generation settings
     generation:
       max_new_tokens: 512
       temperature: 0.0
+      top_p: 1.0
     
     # Image processing (radiology-specific)
     image_processing:
@@ -128,12 +71,10 @@ models:
       normalize: true
       contrast_enhancement: true
 
-  # RadFM
   radfm:
-    name: "RadFM"
+    name: "StanfordAIMI/RadFM-7B"
     type: "local"
-    provider: "custom"
-    model_path: "${RADFM_PATH}"
+    provider: "huggingface"
     
     # Architecture
     architecture:
@@ -145,8 +86,10 @@ models:
     loading:
       device_map: "auto"
       torch_dtype: "float16"
+      load_in_4bit: true
+      use_flash_attention: true
     
-    # Generation
+    # Generation settings
     generation:
       max_new_tokens: 512
       temperature: 0.0
@@ -156,86 +99,3 @@ models:
       - "chest_xray"
       - "ct"
       - "mri"
-
-# Baseline models (non-LLM)
-baselines:
-  # R2Gen
-  r2gen:
-    name: "R2Gen"
-    type: "transformer"
-    checkpoint_path: "./checkpoints/r2gen.pth"
-    
-    architecture:
-      encoder: "ResNet101"
-      decoder: "Transformer"
-      visual_extractor: "resnet101"
-    
-    generation:
-      beam_size: 3
-      max_length: 100
-  
-  # R2GenCMN
-  r2gencmn:
-    name: "R2GenCMN"
-    type: "transformer"
-    checkpoint_path: "./checkpoints/r2gencmn.pth"
-    
-    architecture:
-      encoder: "ResNet101"
-      decoder: "Transformer"
-      memory_module: "cross_modal"
-    
-    generation:
-      beam_size: 3
-      max_length: 100
-
-# Prompts for specialist models
-prompts:
-  # CheXagent prompts
-  chexagent:
-    report_generation: |
-      Generate a detailed radiology report for this chest X-ray.
-    
-    view_classification: |
-      What is the view of this chest X-ray? (PA/AP/Lateral)
-    
-    abnormality_detection: |
-      List all abnormalities visible in this chest X-ray.
-    
-    phrase_grounding: |
-      Locate the following finding in the image: {finding}
-  
-  # Generic specialist prompt
-  generic:
-    report_generation: |
-      <image>
-      Generate a radiology report for this chest X-ray image.
-    
-    vqa: |
-      <image>
-      Question: {question}
-      Answer:
-    
-    grounding: |
-      <image>
-      Identify and locate: {finding}
-
-# Training information (for reference)
-training_info:
-  chexagent:
-    training_data:
-      - "MIMIC-CXR (377K image-report pairs)"
-      - "CheXpert (224K images)"
-    instruction_data: "CheXinstruct (6M samples)"
-    
-  maira2:
-    training_data:
-      - "MIMIC-CXR"
-      - "MS-CXR (bounding boxes)"
-    key_feature: "Built-in grounding capability"
-    
-  llava_rad:
-    training_data:
-      - "MIMIC-CXR"
-      - "IU X-Ray"
-    vision_encoder: "BioMedCLIP (radiology-specific)"

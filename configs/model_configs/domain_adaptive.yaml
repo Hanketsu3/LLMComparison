@@ -1,61 +1,18 @@
-# Domain-Adaptive Models Configuration
+# ============================================================================
+# DOMAIN-ADAPTIVE MODELS - MAIN BENCHMARK (3 Models)
+# ============================================================================
+# Medical/biomedical-specialized models trained with medical context.
+# 
+# NOTE: Domain models in EXTRA TRACK moved to: extra_track_domain.yaml
+#   - Qwen2-VL-OCR (document-focused, not radiology)
+#   - Latxa-Qwen3-VL (language-specific, not English)
+#   - Med-PaLM (API-based, cost tracking required)
 
 models:
-  # Qwen2-VL OCR (Domain-Adaptive)
-  qwen2_vl_ocr_2b:
-    name: "prithivMLmods/Qwen2-VL-OCR-2B-Instruct"
-    type: "local"
-    provider: "huggingface"
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: false
-
-  # Latxa Qwen3-VL (Language-adapted Domain model)
-  latxa_qwen3_vl_2b:
-    name: "HiTZ/Latxa-Qwen3-VL-2B-Instruct"
-    type: "local"
-    provider: "huggingface"
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: true
-
-  # MedGemma 4B IT
-  medgemma_4b_it:
-    name: "google/medgemma-4b-it"
-    type: "local"
-    provider: "huggingface"
-    loading:
-      device_map: "auto"
-      torch_dtype: "float16"
-      load_in_4bit: true
-
-  # Med-PaLM 2 (via Google API)
-  med_palm:
-    name: "med-palm-2"
-    type: "api"
-    provider: "google"
-    api_key: "${GOOGLE_API_KEY}"
-    max_tokens: 1024
-    temperature: 0.0
-    
-    # Med-PaLM specific settings
-    medical_context: true
-    safety_settings:
-      harm_category_medical: "BLOCK_NONE"
-    
-    rate_limit:
-      requests_per_minute: 10
-      retry_attempts: 3
-      retry_delay: 5
-
-  # LLaVA-Med (Local)
   llava_med:
     name: "microsoft/llava-med-v1.5-vicuna-7b"
     type: "local"
     provider: "huggingface"
-    model_path: "${LLAVA_MED_PATH}"
     
     # Architecture
     architecture:
@@ -77,66 +34,28 @@ models:
       temperature: 0.0
       top_p: 1.0
       do_sample: false
-    
-    # Image processing
-    image_processing:
-      size: 336
-      normalize: true
-      mean: [0.48145466, 0.4578275, 0.40821073]
-      std: [0.26862954, 0.26130258, 0.27577711]
 
-# Prompts for domain-adaptive models
-prompts:
-  # Report Generation
-  report_generation:
-    system: |
-      You are a medical AI assistant trained on biomedical literature. 
-      Analyze the chest X-ray and generate a comprehensive radiology report.
-    
-    user: |
-      <image>
-      Generate a detailed radiology report for this chest X-ray image.
-      Include both FINDINGS and IMPRESSION sections.
-  
-  # Visual Question Answering  
-  vqa:
-    system: |
-      You are a medical AI assistant. Answer the medical question about 
-      the provided image accurately.
-    
-    user: |
-      <image>
-      Question: {question}
-      Answer:
-  
-  # Grounding
-  grounding:
-    system: |
-      You are a medical AI assistant. Identify the location of the 
-      specified finding in the image.
-    
-    user: |
-      <image>
-      Locate the following finding: {finding}
-      Provide the bounding box coordinates.
+  medgemma_4b_it:
+    name: "google/medgemma-4b-it"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+    generation:
+      max_new_tokens: 512
+      temperature: 0.0
 
-# Training details (for reference)
-training_info:
-  llava_med:
-    base_model: "LLaVA-1.5"
-    training_data:
-      - "PMC-15M"  # PubMed Central figures
-      - "Medical instruction data"
-    training_stages:
-      - stage: "vision-language alignment"
-        data: "PMC-15M figure-caption pairs"
-      - stage: "instruction tuning"
-        data: "Medical QA datasets"
-    
-  med_palm:
-    base_model: "PaLM 2"
-    training_data:
-      - "Medical textbooks"
-      - "Clinical guidelines"
-      - "Medical QA datasets"
-    evaluation: "Achieved expert-level on MedQA"
+  biomedgpt:
+    name: "PharMolix/BiomedGPT-LM-7B"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+      use_flash_attention: true
+    generation:
+      max_new_tokens: 512
+      temperature: 0.0

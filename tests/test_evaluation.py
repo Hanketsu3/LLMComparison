@@ -1,8 +1,17 @@
-"""Tests for evaluation modules."""
+"""Tests for evaluation modules.
+
+Test Coverage:
+- Clinical metrics (RadGraph F1)
+- NLP metrics (BLEU, ROUGE)
+- Grounding evaluation (Bounding box IoU)
+- Statistical testing utilities
+"""
 
 import pytest
 
 
+@pytest.mark.evaluation
+@pytest.mark.unit
 class TestRadGraphF1:
     """Test RadGraph F1 evaluator."""
     

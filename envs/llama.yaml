@@ -1,0 +1,55 @@
+name: llmcomp-llama
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pytorch::pytorch::py311*
+  - pytorch::pytorch-cuda=11.8
+  - pytorch::torchvision
+  - pip
+  - pip:
+    # PyTorch
+    - torch>=2.1.0
+    - torchvision>=0.16.0
+    
+    # Transformers: Llama-3.2-Vision requires 4.44+ for vision support
+    - transformers>=4.44.0
+    - accelerate>=0.24.0
+    - bitsandbytes>=0.41.0
+    
+    # Llama vision setup
+    - Pillow>=10.0.0
+    
+    # Flash-attention for performance
+    - flash-attn>=2.3.0
+    
+    # HF token handling (gated model)
+    - huggingface-hub>=0.17.0
+    
+    # Data & Eval
+    - datasets>=2.14.0
+    - numpy>=1.24.0
+    - pandas>=2.0.0
+    - evaluate>=0.4.0
+    - rouge-score>=0.1.2
+    - scikit-learn>=1.3.0
+    - scipy>=1.11.0
+    
+    # Utilities
+    - pyyaml>=6.0
+    - python-dotenv>=1.0.0
+    - tqdm>=4.66.0
+    - omegaconf>=2.3.0
+    - hydra-core>=1.3.0
+    
+    # Notebooks
+    - jupyter>=1.0.0
+    - ipywidgets>=8.0.0
+    - ipykernel>=6.0.0
+    
+    # CLI & Tracking
+    - typer>=0.9.0
+    - rich>=13.0.0
+    - wandb>=0.16.0

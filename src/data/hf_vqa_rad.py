@@ -41,12 +41,27 @@ class HFVQARADDataset:
         self.image_size = image_size
         
         try:
-            from datasets import load_dataset
+            from datasets import load_dataset, concatenate_datasets
         except ImportError:
             raise ImportError("Please install: pip install datasets")
-        
-        logger.info(f"Downloading VQA-RAD ({split}) from HuggingFace...")
-        self._hf_dataset = load_dataset("flaviagiammarino/vqa-rad", split=split)
+
+        if split == "all":
+            logger.info("Downloading all VQA-RAD splits from HuggingFace...")
+            dataset_dict = load_dataset("flaviagiammarino/vqa-rad")
+
+            if hasattr(dataset_dict, "keys"):
+                split_names = [name for name in dataset_dict.keys() if len(dataset_dict[name]) > 0]
+                if not split_names:
+                    raise ValueError("No non-empty splits found in HuggingFace VQA-RAD dataset")
+
+                self._hf_dataset = concatenate_datasets([dataset_dict[name] for name in split_names])
+                logger.info(f"Merged splits: {split_names}")
+            else:
+                # Fallback in case HF returns a single split dataset object
+                self._hf_dataset = dataset_dict
+        else:
+            logger.info(f"Downloading VQA-RAD ({split}) from HuggingFace...")
+            self._hf_dataset = load_dataset("flaviagiammarino/vqa-rad", split=split)
         
         if max_samples is not None:
             self._hf_dataset = self._hf_dataset.select(range(min(max_samples, len(self._hf_dataset))))

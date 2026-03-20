@@ -1,9 +1,17 @@
-"""Tests for model modules."""
+"""Tests for model modules.
+
+Test Coverage:
+- BaseModel dataclass structure
+- Model initialization and properties
+- Model-specific functionality (parsing, inference)
+"""
 
 import pytest
 from unittest.mock import Mock, patch
 
 
+@pytest.mark.models
+@pytest.mark.unit
 class TestBaseModel:
     """Test base model functionality."""
     

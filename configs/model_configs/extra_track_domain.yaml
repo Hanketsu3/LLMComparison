@@ -1,0 +1,64 @@
+# Domain-Specific Models (Medical/Language-Adapted) - EXTRA TRACK (2 models)
+# These models extend our domain coverage but fall outside the MAIN benchmark scope.
+# Status: Experimental, optional comparison for specific use cases
+
+qwen2_vl_ocr_2b:
+  model_name: "Qwen2-VL-OCR-2B"
+  provider: "Alibaba DAMO Academy"
+  capability: "Document OCR and Visual Understanding"
+  description: "Language-adapted Qwen2 model with specialized OCR and document understanding capabilities"
+  model_path: "Qwen/Qwen2-VL-2B-OCR"
+  encoder: "clip-vit-large-patch14-336"
+  max_tokens: 2048
+  vision_config:
+    image_size: 1344
+    patch_size: 14
+  supports_ocr: true
+  supports_dense_text: true
+  default_kwargs:
+    temperature: 0.7
+    top_p: 0.95
+    num_beams: 1
+  note: "Trade-off: Better OCR performance, slightly lower general VQA performance compared to Qwen2-VL-2B"
+
+latxa_qwen3_vl_2b:
+  model_name: "Latxa-Qwen3-VL-2B"
+  provider: "HiTZ/Ixa Group + Alibaba (Collaborative)"
+  capability: "Catalan/Spanish-Language Vision-Language Understanding"
+  description: "Language-adapted model based on Qwen3-VL for regional language support (Catalan, Spanish, Basque)"
+  model_path: "latxa-qwen3-vl-2b"  # Repository: https://huggingface.co/HiTZ/latxa-full-qwen3-vl-2b
+  encoder: "qwen2-vl-encoder"
+  max_tokens: 2048
+  supported_languages: ["Catalan", "Spanish", "Basque", "English"]
+  language_performance:
+    english_baseline: 1.0
+    spanish_adjusted: 0.95
+    catalan_adjusted: 0.92
+  vision_config:
+    image_size: 1344
+    patch_size: 14
+  default_kwargs:
+    temperature: 0.7
+    top_p: 0.95
+    num_beams: 1
+  note: "Excellent for regional/multilingual experiments; slightly reduced English performance"
+
+# Global configuration for EXTRA domain models
+inference:
+  timeout: 120  # 2 minutes
+  batch_size: 2
+  device: "cuda"
+  dtype: "float16"
+
+evaluation:
+  use_xlm_metrics: false  # Set to true if running multilingual evaluation
+  skip_language_mismatch_warnings: true
+
+# Optional: Med-PaLM (API-based, out of scope for local benchmark)
+# Kept as reference - requires PaLM API access
+# med_palm:
+#   model_name: "Med-PaLM"
+#   provider: "Google DeepMind"
+#   capability: "Medical Domain Knowledge QA"
+#   status: "API-only, requires Google Cloud setup"
+#   model_path: "google/med-palm"

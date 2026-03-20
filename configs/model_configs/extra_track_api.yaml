@@ -1,0 +1,129 @@
+# API-Based Models - EXTRA TRACK (2 models)
+# These are cloud-hosted proprietary models requiring API keys and paid access.
+# Kept for optional validation experiments, not part of main benchmark due to cost.
+# Cost: ~$0.01-0.03 per image inference
+
+gpt4v:
+  model_name: "GPT-4 Vision"
+  provider: "OpenAI"
+  capability: "General-Purpose Vision-Language Understanding"
+  description: "State-of-the-art proprietary model from OpenAI with strong general understanding"
+  model_path: "gpt-4-vision-preview"
+  api_provider: "openai"
+  requires_api_key: true
+  api_key_env_var: "OPENAI_API_KEY"
+  
+  # API Configuration
+  api_config:
+    base_url: "https://api.openai.com/v1"
+    timeout: 30
+    retry_attempts: 3
+    rate_limit_per_minute: 500
+  
+  # Model capabilities
+  max_tokens: 2048
+  vision_capabilities:
+    - text_recognition
+    - document_understanding
+    - medical_chart_reading
+    - image_analysis
+    - reasoning
+  
+  # API parameters
+  default_kwargs:
+    temperature: 0.7
+    top_p: 1.0
+    max_tokens: 1024
+  
+  # Cost tracking
+  cost:
+    per_1k_input_tokens: 0.01
+    per_1k_output_tokens: 0.03
+    estimated_cost_per_image: 0.02
+    monthly_budget_recommendation: 500  # USD
+  
+  # Reliability & support
+  uptime_sla: "99.9%"
+  support_level: "Production-ready"
+  note: "Requires paid OpenAI account with billing setup. Monitor usage at https://platform.openai.com/account/usage"
+
+gemini:
+  model_name: "Gemini-1.5-Pro"
+  provider: "Google DeepMind"
+  capability: "General-Purpose Vision-Language Understanding with Extended Context"
+  description: "Multimodal model from Google with strong reasoning and extended context window"
+  model_path: "gemini-1.5-pro"
+  api_provider: "google"
+  requires_api_key: true
+  api_key_env_var: "GOOGLE_API_KEY"
+  
+  # API Configuration
+  api_config:
+    base_url: "https://generativelanguage.googleapis.com/v1"
+    timeout: 30
+    retry_attempts: 3
+    rate_limit_per_minute: 400
+  
+  # Model capabilities
+  max_tokens: 8192
+  context_window: 1000000  # 1M tokens
+  vision_capabilities:
+    - text_recognition
+    - document_understanding
+    - medical_chart_reading
+    - image_analysis
+    - reasoning
+    - long_document_processing
+  
+  # API parameters
+  default_kwargs:
+    temperature: 0.7
+    top_p: 1.0
+    top_k: 40
+    max_tokens: 2048
+  
+  # Cost tracking
+  cost:
+    per_1k_input_tokens: 0.005
+    per_1k_output_tokens: 0.02
+    estimated_cost_per_image: 0.015
+    monthly_budget_recommendation: 300  # USD (slightly cheaper than GPT-4V)
+  
+  # Reliability & support
+  uptime_sla: "99.95%"
+  support_level: "Production-ready"
+  note: "Requires Google Cloud project with billing enabled. More cost-effective than GPT-4V."
+
+# Global configuration for API models
+api_settings:
+  enable_caching: true
+  cache_ttl: 3600  # Cache responses for 1 hour
+  track_costs: true
+  warn_on_budget_exceed: true
+  fallback_to_local_model: "qwen2-vl-2b"  # If API fails, use local fallback
+
+inference:
+  timeout: 60  # API calls typically complete in 10-30 seconds
+  batch_size: 1  # APIs handle sequential requests
+  parallel_requests: 5  # Can handle up to 5 concurrent API calls
+  retry_policy: "exponential_backoff"
+
+evaluation:
+  compare_with_local: true  # Always compare API results with local models
+  flag_anomalies: true
+
+# Cost Estimation Tool
+cost_estimation:
+  # Estimate total cost before running experiment
+  num_samples: 1000  # For typical experiment
+  estimated_total_cost_gpt4v: 20  # USD
+  estimated_total_cost_gemini: 15  # USD
+  recommendation: "Run API models on subset (100-200 samples) for validation only"
+
+# Disclaimer
+disclaimer: |
+  WARNING: Using these API models will incur costs.
+  - Set spending limits in your API dashboard
+  - Use sparingly and monitor usage closely
+  - For primary experiments, use FREE tier models from MAIN benchmark
+  - This EXTRA track is for optional validation only

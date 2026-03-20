@@ -1,14 +1,20 @@
-# Generalist Models Configuration
+# ============================================================================
+# GENERALIST MODELS - MAIN BENCHMARK (8 Models)
+# ============================================================================
+# These are general-purpose, lightweight vision-language models suitable
+# for direct comparison on radiology benchmarks. 
+# 
+# NOTE: API models (GPT-4V, Gemini) moved to: extra_track_api.yaml
 
 models:
-  qwen3_vl_2b:
-    name: "Qwen/Qwen3-VL-2B-Instruct"
+  qwen2_vl_2b:
+    name: "Qwen/Qwen2-VL-2B-Instruct"
     type: "local"
     provider: "huggingface"
     loading:
       device_map: "auto"
       torch_dtype: "float16"
-      load_in_4bit: true
+      load_in_4bit: false
 
   qwen2_5_vl_3b:
     name: "Qwen/Qwen2.5-VL-3B-Instruct"
@@ -19,8 +25,17 @@ models:
       torch_dtype: "float16"
       load_in_4bit: true
 
-  qwen2_vl_2b:
-    name: "Qwen/Qwen2-VL-2B-Instruct"
+  qwen3_vl_2b:
+    name: "Qwen/Qwen3-VL-2B-Instruct"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+
+  phi3_5_vision:
+    name: "microsoft/Phi-3.5-vision-instruct"
     type: "local"
     provider: "huggingface"
     loading:
@@ -28,120 +43,43 @@ models:
       torch_dtype: "float16"
       load_in_4bit: false
 
-  phi3_5_vision:
-    name: "microsoft/Phi-3.5-vision-instruct"
-    type: "local"
-    provider: "huggingface"
-
   smolvlm2_2b:
     name: "HuggingFaceTB/SmolVLM2-2.2B-Instruct"
     type: "local"
     provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
 
-  # GPT-4 Vision
-  gpt4v:
-    name: "gpt-4-vision-preview"
-    type: "api"
-    provider: "openai"
-    api_key: "${OPENAI_API_KEY}"
-    max_tokens: 1024
-    temperature: 0.0
-    top_p: 1.0
-    
-    # Few-shot prompting settings
-    few_shot:
-      enabled: true
-      num_examples: 3
-      example_selection: "random"  # random, similar, diverse
-    
-    # Rate limiting
-    rate_limit:
-      requests_per_minute: 10
-      retry_attempts: 3
-      retry_delay: 5
-
-  # Gemini 1.5 Pro Vision
-  gemini:
-    name: "gemini-1.5-pro"
-    type: "api"
-    provider: "google"
-    api_key: "${GOOGLE_API_KEY}"
-    max_tokens: 1024
-    temperature: 0.0
-    top_p: 1.0
-    
-    few_shot:
-      enabled: true
-      num_examples: 3
-      example_selection: "random"
-    
-    rate_limit:
-      requests_per_minute: 15
-      retry_attempts: 3
-      retry_delay: 5
-
-  # Llama-3 Vision (Local)
-  llama3:
-    name: "meta-llama/Llama-3-8B-Instruct"
+  internvl2_2b:
+    name: "OpenGVLab/InternVL2-2B"
     type: "local"
     provider: "huggingface"
-    
-    # Model loading settings
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: false
+
+  internvl2_4b:
+    name: "OpenGVLab/InternVL2-4B"
+    type: "local"
+    provider: "huggingface"
+    loading:
+      device_map: "auto"
+      torch_dtype: "float16"
+      load_in_4bit: true
+
+  llama3_vision:
+    name: "meta-llama/Llama-3.2-11B-Vision-Instruct"
+    type: "local"
+    provider: "huggingface"
     loading:
       device_map: "auto"
       torch_dtype: "float16"
       load_in_4bit: true
       use_flash_attention: true
-    
-    # Generation settings
     generation:
       max_new_tokens: 512
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-    
-    few_shot:
-      enabled: true
-      num_examples: 3
-
-# Prompts for generalist models
-prompts:
-  # Report Generation
-  report_generation:
-    system: |
-      You are an expert radiologist. Analyze the provided chest X-ray image 
-      and generate a detailed radiology report. Focus on identifying any 
-      abnormalities, their location, and clinical significance.
-    
-    user: |
-      Please analyze this chest X-ray and provide a radiology report with:
-      1. FINDINGS: Detailed description of observations
-      2. IMPRESSION: Summary of key findings and clinical interpretation
-    
-    few_shot_template: |
-      Example {idx}:
-      [Image provided]
-      Report:
-      FINDINGS: {findings}
-      IMPRESSION: {impression}
-  
-  # Visual Question Answering
-  vqa:
-    system: |
-      You are an expert radiologist. Answer the following question about 
-      the provided medical image accurately and concisely.
-    
-    user: |
-      Question: {question}
-      Please provide a clear and accurate answer based on the image.
-  
-  # Grounding
-  grounding:
-    system: |
-      You are an expert radiologist. Identify and locate the mentioned 
-      finding in the image. Provide coordinates for the bounding box.
-    
-    user: |
-      Finding: {finding}
-      Please identify the location of this finding in the image and 
-      provide bounding box coordinates [x_min, y_min, x_max, y_max].

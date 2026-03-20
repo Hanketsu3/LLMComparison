@@ -1,0 +1,305 @@
+# Runtime Presets for LLM Comparison
+# ==============================================================================
+# Each preset defines a complete hardware + software configuration including:
+# - Recommended model list
+# - Quantization strategy
+# - Batch size settings
+# - Image resolution
+# - Token generation limits
+# - Memory optimizations
+
+presets: {}
+
+# ============================================================================
+# PRESET: smoke_cpu
+# ============================================================================
+# Purpose: Ultra-lightweight test on CPU for CI/debugging
+# Hardware: Any CPU (8GB RAM minimum)
+# Expected runtime: ~5 min for 10 samples per model
+# Cost: Free
+
+smoke_cpu:
+  name: "CPU Smoke Test"
+  hardware:
+    device: "cpu"
+    precision: "fp32"
+    max_memory_gb: 8
+  
+  models:
+    # Only lightweight models
+    - "qwen2-vl-2b"
+    - "phi3-vision"
+  
+  inference:
+    quantization: null  # CPU inference, fp32
+    batch_size: 1
+    image_size: 224
+    num_crops: 1
+    max_new_tokens: 50
+    
+    # CPU-specific
+    num_threads: 4
+    enable_kv_cache: false
+  
+  evaluation:
+    num_samples: 10  # Tiny sample set
+    skip_heavy_metrics: true  # Skip RadGraph F1
+  
+  expected_gpu_memory_mb: 0
+  warnings:
+    - "CPU mode: Very slow, suitable only for testing"
+    - "Use for CI pipelines only"
+
+# ============================================================================
+# PRESET: free_colab_t4
+# ============================================================================
+# Purpose: Google Colab free tier (T4 GPU, 16GB VRAM)
+# Hardware: NVIDIA T4 (16GB), CPU 2-core, 12GB RAM
+# Expected: ~2-4 hours full benchmark, ~10 min per model
+# Cost: Free (with usage limits)
+
+free_colab_t4:
+  name: "Google Colab Free (T4)"
+  hardware:
+    device: "cuda:0"
+    gpu_name: "NVIDIA T4"
+    vram_gb: 16
+    precision: "fp16"
+    max_memory_gb: 14  # Leave headroom
+  
+  models:
+    # Only T4-native or 4-bit compatible
+    - "qwen2-vl-2b"      # Native
+    - "phi3-vision"       # Native
+    - "smolvlm2-2.2b"    # Native
+    - "internvl2-2b"     # Native w/ 4-bit
+    - "qwen3-vl-2b"      # 4-bit
+  
+  inference:
+    quantization: "4bit"  # Force 4-bit for larger models
+    batch_size: 1
+    image_size: 256
+    num_crops: 1
+    max_new_tokens: 128
+    
+    # T4-specific optimizations
+    use_flash_attention: false  # Not available on T4
+    use_flash_attention_2: false
+    enable_kv_cache: true
+    gradient_checkpointing: false
+  
+  evaluation:
+    num_samples: 50  # ~10-15min per model
+    metrics:
+      - "bleu"
+      - "rouge_l"
+      # Skip heavy clinical metrics
+  
+  expected_gpu_memory_mb: 14000
+  
+  warnings:
+    - "Session timeout: ~12 hours, save results frequently"
+    - "Quantization to 4-bit is MANDATORY"
+    - "Do NOT use 7B+ models without 4-bit"
+    - "Flash-Attention not available; use attention_sink or streaming"
+    - "Grounding (bounding box) may OOM; use sampling"
+  
+  fallback_strategy: "skip_model"  # Skip if OOM instead of crashing
+  
+  sample_batch_strategy:
+    # Process in chunks to avoid OOM
+    samples_per_batch: 5
+    save_intermediate_results: true
+
+# ============================================================================
+# PRESET: colab_paid_mid
+# ============================================================================
+# Purpose: Colab paid tier (V100 or A100-40GB)
+# Hardware: 1× NVIDIA V100 (32GB) or A100-40GB-PCIe
+# Expected: ~1-2 hours full benchmark
+# Cost: ~$10-20/hour of compute
+
+colab_paid_mid:
+  name: "Colab Paid (V100 / A100 40GB)"
+  hardware:
+    device: "cuda:0"
+    gpu_name: "NVIDIA V100 or A100-40GB"
+    vram_gb: 40
+    precision: "bf16"
+    max_memory_gb: 36
+  
+  models:
+    # All T4-safe models + medium models
+    - "qwen2-vl-2b"
+    - "qwen2.5-vl-3b"
+    - "phi3-vision"
+    - "smolvlm2-2.2b"
+    - "internvl2-2b"
+    - "internvl2-4b"
+    - "llava-med"
+    - "medgemma-4b"
+  
+  inference:
+    quantization: null  # Use fp16/bf16, no quant needed
+    batch_size: 2
+    image_size: 384
+    num_crops: 1
+    max_new_tokens: 256
+    
+    use_flash_attention: true
+    use_flash_attention_2: false
+    enable_kv_cache: true
+    gradient_checkpointing: false
+    use_vllm: false  # Optional but not recommended on colab
+  
+  evaluation:
+    num_samples: 100  # Full evaluation set
+    metrics:
+      - "bleu"
+      - "rouge_l"
+      - "radgraph_f1"  # Now include clinical
+    
+  expected_gpu_memory_mb: 36000
+  
+  sample_batch_strategy:
+    samples_per_batch: 10
+    save_intermediate_results: true
+
+# ============================================================================
+# PRESET: gpu_24g
+# ============================================================================
+# Purpose: Local machine with 24GB GPU (RTX 3090, RTX 4090, RTX 6000)
+# Hardware: 1× single GPU 24GB
+# Expected: ~30-40 min full benchmark
+# Cost: 0 (if already owned)
+
+gpu_24g:
+  name: "Local GPU 24GB (RTX 3090/4090)"
+  hardware:
+    device: "cuda:0"
+    gpu_name: "NVIDIA RTX 3090 / RTX 4090"
+    vram_gb: 24
+    precision: "bf16"
+    max_memory_gb: 22
+  
+  models:
+    # All main benchmark models
+    - "qwen2-vl-2b"
+    - "qwen2.5-vl-3b"
+    - "qwen3-vl-2b"
+    - "phi3-vision"
+    - "smolvlm2-2.2b"
+    - "internvl2-2b"
+    - "internvl2-4b"
+    - "llama3-vision"       # 11B, fp16
+    - "llava-med"           # 7B
+    - "medgemma-4b"
+    - "biomedgpt"           # 7B
+    - "chexagent"           # 8B specialist
+    - "llava-rad"           # 8B specialist
+  
+  inference:
+    quantization: null  # Use bf16 (Ampere native)
+    batch_size: 2
+    image_size: 512
+    num_crops: 2
+    max_new_tokens: 512
+    
+    use_flash_attention: true
+    use_flash_attention_2: true  # Ampere supports FA2
+    enable_kv_cache: true
+    gradient_checkpointing: false
+  
+  evaluation:
+    num_samples: 200  # Full evaluation
+    metrics:
+      - "bleu"
+      - "rouge_l"
+      - "radgraph_f1"
+      - "chexbert_f1"
+      - "factchexcker"
+      - "hallucination_rate"
+  
+  expected_gpu_memory_mb: 22000
+  
+  sample_batch_strategy:
+    samples_per_batch: 20
+    save_intermediate_results: false
+  
+  enable_vllm: true  # Can use vLLM for batching
+
+# ============================================================================
+# PRESET: high_end_multi_gpu
+# ============================================================================
+# Purpose: High-end cluster or multi-GPU machine (2×40GB+)
+# Hardware: 2× NVIDIA A100-40GB, H100-80GB, etc.
+# Expected: ~15-20 min full benchmark
+# Cost: Enterprise/Lab resource
+
+high_end_multi_gpu:
+  name: "Multi-GPU Cluster (A100/H100)"
+  hardware:
+    device: "cuda"
+    gpu_name: "NVIDIA A100-40GB or H100-80GB"
+    num_gpus: 2
+    vram_gb_per_gpu: 40
+    total_vram_gb: 80
+    precision: "bf16"
+    max_memory_gb: 70  # Per-GPU limit for isolation
+  
+  models:
+    # All main benchmark models + extras for robustness
+    - "qwen2-vl-2b"
+    - "qwen2.5-vl-3b"
+    - "qwen3-vl-2b"
+    - "phi3-vision"
+    - "smolvlm2-2.2b"
+    - "internvl2-2b"
+    - "internvl2-4b"
+    - "llama3-vision"
+    - "llava-med"
+    - "medgemma-4b"
+    - "biomedgpt"
+    - "chexagent"
+    - "llava-rad"
+    - "radfm"
+  
+  inference:
+    quantization: null  # Full precision
+    batch_size: 4        # Larger batches with tensor parallelism
+    image_size: 768
+    num_crops: 4
+    max_new_tokens: 512
+    
+    use_flash_attention: true
+    use_flash_attention_2: true
+    enable_kv_cache: true
+    gradient_checkpointing: false
+    
+    # Multi-GPU inference
+    use_vllm: true
+    tensor_parallel_size: 2
+    distributed_backend: "nccl"
+  
+  evaluation:
+    num_samples: 500  # Large-scale evaluation
+    metrics:
+      - "bleu"
+      - "rouge_l"
+      - "radgraph_f1"
+      - "chexbert_f1"
+      - "factchexcker"
+      - "hallucination_rate"
+      - "grounding_iou"
+    
+    # Statistical testing
+    enable_bootstrap_ci: true
+  
+  expected_gpu_memory_mb: 70000
+  
+  sample_batch_strategy:
+    samples_per_batch: 50
+    save_intermediate_results: false
+  
+  enable_distributed_sampling: true
+  distributed_sampler: "torch_dist"

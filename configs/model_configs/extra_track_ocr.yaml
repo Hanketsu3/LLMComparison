@@ -1,0 +1,63 @@
+# OCR & Document Analysis Models - EXTRA TRACK (3 models)
+# These models are specialized for OCR, document parsing, and chart understanding.
+# They are not part of the MAIN benchmark but provide additional capabilities.
+# Status: Experimental, not included in comparison experiments
+
+got_ocr2:
+  model_name: "GOT-OCR2"
+  provider: "OpenGVLab"
+  capability: "Document OCR and Chart Understanding"
+  description: "Specialized in Optical Character Recognition for documents and charts"
+  model_path: "step_checkpoint-1280"  # Repository: https://huggingface.co/stepfun-ai/GOT-OCR2
+  max_tokens: 4096
+  input_size: 2560
+  supports_bbox: true
+  special_tokens:
+    ocr_mode: "<ocr>"
+    chart_mode: "<chart>"
+  default_kwargs:
+    temperature: 0.7
+    num_beams: 1
+
+nougat_base:
+  model_name: "Nougat-Base"
+  provider: "Meta (AI2)"
+  capability: "Scientific Document Understanding and Math Recognition"
+  description: "Specialized in converting PDF documents to structured text, excellent for scientific papers and mathematical formulas"
+  model_path: "nougat-base"  # Repository: https://huggingface.co/facebook/nougat-base
+  max_tokens: 2048
+  supports_pdf: true
+  special_tokens:
+    page_start: "<pad>"
+    formula_mode: "<formula>"
+  default_kwargs:
+    num_beams: 4
+    temperature: 0.0
+  note: "Requires pdf2image and transformers>=4.35.0"
+
+matcha_chartqa:
+  model_name: "MatCha-ChartQA"
+  provider: "Google Research"
+  capability: "Chart Understanding and Question Answering"
+  description: "Vision-language model specialized in understanding charts, graphs, and visual data representations"
+  model_path: "matcha"  # Repository: https://huggingface.co/google/matcha
+  max_tokens: 1024
+  input_size: 384
+  supports_charts: true
+  chart_types: ["bar", "line", "pie", "scatter", "table"]
+  default_kwargs:
+    temperature: 0.7
+    num_beams: 1
+  note: "Optimized for chart-based QA tasks"
+
+# Configuration for all EXTRA OCR models
+inference:
+  timeout: 180  # 3 minutes - these are slower models
+  batch_size: 1  # Keep low due to memory requirements
+  device: "cuda"
+  dtype: "float16"
+
+evaluation:
+  skip_ocr_metrics: false
+  include_char_error_rate: true
+  include_word_error_rate: true

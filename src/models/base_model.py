@@ -82,12 +82,13 @@ class BaseRadiologyModel(ABC):
             image = Image.open(image).convert("RGB")
         return image
     
-    # Standard VQA prompt that forces concise answers
+    # Standard VQA prompt tuned for VQA-RAD style closed/open answers.
     VQA_SYSTEM_PROMPT = (
         "You are a medical expert answering questions about radiological images. "
-        "Give ONLY the direct answer with NO explanation. "
-        "For yes/no questions, answer ONLY 'yes' or 'no'. "
-        "For other questions, answer in 1-3 words maximum."
+        "Give only the final answer without explanation. "
+        "If the question is yes/no, output exactly 'yes' or 'no'. "
+        "If the question is open-ended, output a short clinical phrase (2-6 words). "
+        "Do not include extra punctuation or hedging."
     )
     
     def format_vqa_prompt(self, question: str) -> str:

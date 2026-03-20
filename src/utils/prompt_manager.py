@@ -132,6 +132,26 @@ IMPRESSION: Your clinical interpretation""",
     
     # Default prompts for VQA
     DEFAULT_VQA_PROMPTS = {
+        "vqa_rad_strict": PromptTemplate(
+            name="vqa_rad_strict",
+            task="vqa",
+            version="v2",
+            description="VQA-RAD optimized prompt with strict answer formatting",
+            system_prompt=(
+                "You are an expert radiologist answering VQA questions from chest X-ray images. "
+                "Return only the answer text. "
+                "For yes/no questions return exactly yes or no. "
+                "For non-yes/no questions return a short phrase with key finding only."
+            ),
+            user_prompt=(
+                "Question: {question}\n"
+                "Answer format rules:\n"
+                "- no explanation\n"
+                "- no full sentence\n"
+                "- if uncertain, give most likely concise finding\n"
+                "Answer:"
+            ),
+        ),
         "baseline": PromptTemplate(
             name="baseline",
             task="vqa",

@@ -73,6 +73,14 @@ class GenericVisionChatModel(BaseRadiologyModel):
                     quantization_config=quantization_config,
                     trust_remote_code=True,
                 )
+
+                # Avoid noisy warnings about sampling params when we do deterministic decoding.
+                gen_cfg = getattr(self.model, "generation_config", None)
+                if gen_cfg is not None:
+                    for attr in ("temperature", "top_p", "top_k"):
+                        if hasattr(gen_cfg, attr):
+                            setattr(gen_cfg, attr, None)
+
                 self._is_loaded = True
                 logger.info(f"Loaded {self.model_name} with {model_cls.__name__}")
                 return
@@ -119,7 +127,23 @@ class GenericVisionChatModel(BaseRadiologyModel):
                 return_tensors="pt",
             )
 
-        return inputs.to(self.device)
+        inputs = inputs.to(self.device)
+        return self._align_input_dtypes(inputs)
+
+    def _align_input_dtypes(self, inputs):
+        """Cast float input tensors to model dtype to avoid float/half mismatches."""
+        try:
+            import torch
+            model_dtype = getattr(self.model, "dtype", None)
+            if model_dtype is None:
+                return inputs
+
+            for key, value in list(inputs.items()):
+                if torch.is_tensor(value) and torch.is_floating_point(value):
+                    inputs[key] = value.to(dtype=model_dtype)
+            return inputs
+        except Exception:
+            return inputs
 
     @staticmethod
     def _decode_generated(processor, inputs, outputs) -> str:

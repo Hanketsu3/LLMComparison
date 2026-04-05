@@ -214,24 +214,30 @@ class ResultWriter:
             if model_name not in by_model:
                 by_model[model_name] = []
             by_model[model_name].append(record)
+
+        identifier_keys = {
+            "sample_id",
+            "dataset_name",
+            "model_name",
+            "task",
+            "timestamp",
+        }
+
+        metric_keys = sorted(
+            {
+                key
+                for record in sample_metrics
+                for key, value in record.items()
+                if key not in identifier_keys and isinstance(value, (int, float)) and value is not None
+            }
+        )
         
         # Compute aggregates
         for model_name, records in by_model.items():
             aggregate[model_name] = {}
             
-            # Iterate over all possible metrics
-            for metric_name in [
-                "bleu",
-                "rouge_l",
-                "meteor",
-                "radgraph_f1",
-                "chexbert_f1",
-                "exact_match",
-                "vqa_accuracy",
-                "bbox_iou",
-                "hallucination_score",
-                "factual_correctness",
-            ]:
+            # Iterate over every numeric metric found in sample-level records.
+            for metric_name in metric_keys:
                 values = [r[metric_name] for r in records if metric_name in r and r[metric_name] is not None]
                 
                 if values:

@@ -200,6 +200,20 @@ def load_dataset(dataset_name: str, num_samples: Optional[int], ms_cxr_path: Opt
     return "grounding", MSCXRDataset(data_dir=ms_cxr_path, split="test", max_samples=num_samples)
 
 
+def _compute_text_metrics(predicted_text: str, reference_text: str) -> Dict[str, Optional[float]]:
+    bleu_score = _get_evaluator("bleu").compute([predicted_text], [reference_text])
+    rouge_score = _get_evaluator("rouge").compute([predicted_text], [reference_text])
+    meteor_score = _get_evaluator("meteor").compute([predicted_text], [reference_text])
+    bert_score = _get_evaluator("bertscore").compute([predicted_text], [reference_text])
+
+    return {
+        "bleu": bleu_score.get("bleu"),
+        "rouge_l": rouge_score.get("rouge_l"),
+        "meteor": meteor_score.get("meteor"),
+        "factual_correctness": bert_score.get("bertscore_f1"),
+    }
+
+
 def evaluate_single_sample(task: str, prediction: PredictionRecord, sample: RadiologySample) -> SampleMetric:
     metric = SampleMetric(
         sample_id=sample.sample_id,
@@ -212,23 +226,25 @@ def evaluate_single_sample(task: str, prediction: PredictionRecord, sample: Radi
         return metric
 
     if task == "rrg" and sample.report_reference:
-        bleu_score = _get_evaluator("bleu").compute([prediction.predicted_text or ""], [sample.report_reference])
-        rouge_score = _get_evaluator("rouge").compute([prediction.predicted_text or ""], [sample.report_reference])
-        meteor_score = _get_evaluator("meteor").compute([prediction.predicted_text or ""], [sample.report_reference])
-        bert_score = _get_evaluator("bertscore").compute([prediction.predicted_text or ""], [sample.report_reference])
+        text_metrics = _compute_text_metrics(prediction.predicted_text or "", sample.report_reference)
         chexbert_score = _get_evaluator("chexbert").compute([prediction.predicted_text or ""], [sample.report_reference])
         radgraph_score = _get_evaluator("radgraph").compute([prediction.predicted_text or ""], [sample.report_reference])
         hallucination = _get_evaluator("hallucination").compute([prediction.predicted_text or ""], [sample.report_reference])
-        metric.bleu = bleu_score.get("bleu")
-        metric.rouge_l = rouge_score.get("rouge_l")
-        metric.meteor = meteor_score.get("meteor")
-        metric.factual_correctness = bert_score.get("bertscore_f1")
+        metric.bleu = text_metrics.get("bleu")
+        metric.rouge_l = text_metrics.get("rouge_l")
+        metric.meteor = text_metrics.get("meteor")
+        metric.factual_correctness = text_metrics.get("factual_correctness")
         metric.chexbert_f1 = chexbert_score.get("chexbert_f1")
         metric.radgraph_f1 = radgraph_score.get("radgraph_f1")
         metric.hallucination_score = hallucination.get("hallucination_score")
 
     elif task == "vqa" and sample.answer_reference:
+        text_metrics = _compute_text_metrics(prediction.predicted_text or "", sample.answer_reference)
         vqa = _get_evaluator("vqa").compute([prediction.predicted_text or ""], [sample.answer_reference])
+        metric.bleu = text_metrics.get("bleu")
+        metric.rouge_l = text_metrics.get("rouge_l")
+        metric.meteor = text_metrics.get("meteor")
+        metric.factual_correctness = text_metrics.get("factual_correctness")
         metric.vqa_accuracy = vqa.get("accuracy")
         metric.exact_match = 1.0 if (prediction.predicted_text or "").strip().lower() == sample.answer_reference.strip().lower() else 0.0
 

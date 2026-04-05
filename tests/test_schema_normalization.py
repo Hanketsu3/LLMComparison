@@ -34,3 +34,16 @@ def test_normalize_grounding_boxes():
     assert sample.bounding_boxes is not None
     assert len(sample.bounding_boxes) == 1
     assert sample.bounding_boxes[0].x_max == 10
+
+
+@pytest.mark.unit
+def test_normalize_question_type_canonicalization():
+    raw = {
+        "sample_id": "q1",
+        "question": "Is there edema?",
+        "answer": "no",
+        "question_type": "yes/no",
+        "image_path": "/tmp/fake.png",
+    }
+    sample = normalize_sample(raw, dataset_name="hf_vqa_rad", split="test")
+    assert sample.question_type == "closed"

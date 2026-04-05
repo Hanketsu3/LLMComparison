@@ -10,6 +10,9 @@ import argparse
 import itertools
 import json
 import logging
+import os
+import random
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -19,7 +22,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.configs.environment import EnvironmentManager, RuntimePreset
-from src.data import HFIUXRayDataset, HFVQARADDataset, MSCXRDataset
 from src.data.schema import BoundingBox, RadiologySample
 from src.evaluation.clinical_metrics.chexbert_f1 import CheXbertF1Evaluator
 from src.evaluation.clinical_metrics.radgraph_f1 import RadGraphF1Evaluator
@@ -29,7 +31,7 @@ from src.evaluation.nlp_metrics.bertscore import BERTScoreEvaluator
 from src.evaluation.nlp_metrics.bleu import BLEUEvaluator
 from src.evaluation.nlp_metrics.meteor import METEOREvaluator
 from src.evaluation.nlp_metrics.rouge import ROUGEEvaluator
-from src.evaluation.vqa_metrics import VQAAccuracyEvaluator
+from src.evaluation.vqa_metrics import VQAAccuracyEvaluator, anls_score, normalize_answer, token_f1_score
 from src.utils.logging import setup_logging
 from src.utils.model_registry import (
     DOMAIN_ADAPTIVE_MODELS,
@@ -103,7 +105,114 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-inaccessible", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--max-fallback-rate",
+        type=float,
+        default=1.0,
+        help="Fail run if any *_fallback_used mean exceeds this ratio (0.0-1.0).",
+    )
+    parser.add_argument(
+        "--strict-sample-validation",
+        action="store_true",
+        help="Fail immediately when a normalized sample does not satisfy task requirements.",
+    )
     return parser.parse_args()
+
+
+def _normalize_question_type(raw: Optional[str]) -> Optional[str]:
+    if not raw:
+        return None
+    value = str(raw).strip().lower().replace("-", "_")
+    if value in {"yes/no", "yes_no", "boolean", "closed", "close"}:
+        return "closed"
+    if value in {"open", "open_ended", "openended"}:
+        return "open"
+    if value in {"count", "counting", "numeric", "number"}:
+        return "counting"
+    return value
+
+
+def validate_sample_for_task(sample: RadiologySample, task: str) -> Tuple[bool, Optional[str]]:
+    """Validate normalized sample against task-required fields and bbox sanity."""
+    try:
+        if not sample.is_valid_for_task(task):
+            return False, f"missing_required_fields_for_{task}"
+    except Exception as exc:
+        return False, f"validation_error:{exc}"
+
+    if task == "grounding" and sample.bounding_boxes:
+        for idx, box in enumerate(sample.bounding_boxes):
+            if box.x_max <= box.x_min or box.y_max <= box.y_min:
+                return False, f"invalid_bbox_geometry_at_index_{idx}"
+
+    return True, None
+
+
+def compute_fallback_rates(sample_metrics: List[Dict[str, Any]]) -> Dict[str, float]:
+    """Compute mean fallback flags from sample-level metrics."""
+    sums: Dict[str, float] = {}
+    counts: Dict[str, int] = {}
+    for row in sample_metrics:
+        for key, value in row.items():
+            if not key.endswith("_fallback_used"):
+                continue
+            if not isinstance(value, (int, float)):
+                continue
+            sums[key] = sums.get(key, 0.0) + float(value)
+            counts[key] = counts.get(key, 0) + 1
+
+    return {
+        key: (sums[key] / counts[key]) if counts[key] > 0 else 0.0
+        for key in sorted(sums.keys())
+    }
+
+
+def set_global_seed(seed: int) -> None:
+    """Configure reproducible RNG state across common libraries."""
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+
+    try:
+        import numpy as np
+
+        np.random.seed(seed)
+    except Exception:
+        logger.debug("NumPy seed setup skipped.")
+
+    try:
+        import importlib.util
+
+        if importlib.util.find_spec("torch") is not None:
+            torch_mod = __import__("torch")
+            torch_mod.manual_seed(seed)
+            if torch_mod.cuda.is_available():
+                torch_mod.cuda.manual_seed_all(seed)
+            try:
+                torch_mod.backends.cudnn.deterministic = True
+                torch_mod.backends.cudnn.benchmark = False
+            except Exception:
+                pass
+    except Exception:
+        logger.debug("Torch seed setup skipped.")
+
+
+def get_git_commit_hash() -> Optional[str]:
+    """Return HEAD commit hash when git metadata is available."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            commit = result.stdout.strip()
+            return commit if commit else None
+    except Exception:
+        return None
+    return None
 
 
 def resolve_models(selectors: List[str]) -> List[str]:
@@ -172,7 +281,7 @@ def normalize_sample(raw: Any, dataset_name: str, split: str) -> RadiologySample
             impression_reference=raw.get("impression") or raw.get("impression_reference"),
             question=raw.get("question"),
             answer_reference=raw.get("answer") or raw.get("answer_reference"),
-            question_type=raw.get("question_type"),
+            question_type=_normalize_question_type(raw.get("question_type")),
             findings_list=raw.get("findings_list"),
             bounding_boxes=bboxes or None,
             view=raw.get("view"),
@@ -191,27 +300,63 @@ def load_dataset(dataset_name: str, num_samples: Optional[int], ms_cxr_path: Opt
         raise ValueError(f"Unsupported dataset: {dataset_name}. Supported: {SUPPORTED_DATASETS}")
 
     if ds == "hf_iu_xray":
+        from src.data import HFIUXRayDataset
+
         return "rrg", HFIUXRayDataset(split="test", max_samples=num_samples)
     if ds == "hf_vqa_rad":
+        from src.data import HFVQARADDataset
+
         return "vqa", HFVQARADDataset(split="test", max_samples=num_samples)
 
     if not ms_cxr_path:
         raise ValueError("Dataset ms_cxr requires --ms-cxr-path")
+    from src.data import MSCXRDataset
+
     return "grounding", MSCXRDataset(data_dir=ms_cxr_path, split="test", max_samples=num_samples)
 
 
 def _compute_text_metrics(predicted_text: str, reference_text: str) -> Dict[str, Optional[float]]:
+    pred_norm = normalize_answer(predicted_text)
+    ref_norm = normalize_answer(reference_text)
     bleu_score = _get_evaluator("bleu").compute([predicted_text], [reference_text])
     rouge_score = _get_evaluator("rouge").compute([predicted_text], [reference_text])
     meteor_score = _get_evaluator("meteor").compute([predicted_text], [reference_text])
     bert_score = _get_evaluator("bertscore").compute([predicted_text], [reference_text])
+    token_scores = token_f1_score(predicted_text, reference_text)
+
+    pred_tokens = set(pred_norm.split()) if pred_norm else set()
+    ref_tokens = set(ref_norm.split()) if ref_norm else set()
+    union = pred_tokens.union(ref_tokens)
+    intersection = pred_tokens.intersection(ref_tokens)
+    jaccard_similarity = (len(intersection) / len(union)) if union else 0.0
+
+    ref_len = len(ref_tokens)
+    pred_len = len(pred_tokens)
+    length_ratio = (pred_len / ref_len) if ref_len > 0 else 0.0
+
+    exact_match_norm = 1.0 if pred_norm == ref_norm and ref_norm else 0.0
 
     return {
         "bleu": bleu_score.get("bleu"),
         "rouge_l": rouge_score.get("rouge_l"),
         "meteor": meteor_score.get("meteor"),
         "factual_correctness": bert_score.get("bertscore_f1"),
+        "bleu_fallback_used": bleu_score.get("bleu_fallback_used", 0.0),
+        "rouge_fallback_used": rouge_score.get("rouge_fallback_used", 0.0),
+        "meteor_fallback_used": meteor_score.get("meteor_fallback_used", 0.0),
+        "bertscore_fallback_used": bert_score.get("bertscore_fallback_used", 0.0),
+        "token_precision": token_scores.get("token_precision"),
+        "token_recall": token_scores.get("token_recall"),
+        "token_f1": token_scores.get("token_f1"),
+        "anls": anls_score(predicted_text, reference_text),
+        "exact_match": exact_match_norm,
+        "jaccard_similarity": jaccard_similarity,
+        "length_ratio": length_ratio,
     }
+
+
+def _compute_vqa_metrics(predicted_text: str, reference_text: str) -> Dict[str, Optional[float]]:
+    return _compute_text_metrics(predicted_text, reference_text)
 
 
 def evaluate_single_sample(task: str, prediction: PredictionRecord, sample: RadiologySample) -> SampleMetric:
@@ -234,25 +379,69 @@ def evaluate_single_sample(task: str, prediction: PredictionRecord, sample: Radi
         metric.rouge_l = text_metrics.get("rouge_l")
         metric.meteor = text_metrics.get("meteor")
         metric.factual_correctness = text_metrics.get("factual_correctness")
+        metric.token_precision = text_metrics.get("token_precision")
+        metric.token_recall = text_metrics.get("token_recall")
+        metric.token_f1 = text_metrics.get("token_f1")
+        metric.anls = text_metrics.get("anls")
+        metric.exact_match = text_metrics.get("exact_match")
+        metric.jaccard_similarity = text_metrics.get("jaccard_similarity")
+        metric.length_ratio = text_metrics.get("length_ratio")
+        metric.bleu_fallback_used = text_metrics.get("bleu_fallback_used")
+        metric.rouge_fallback_used = text_metrics.get("rouge_fallback_used")
+        metric.meteor_fallback_used = text_metrics.get("meteor_fallback_used")
+        metric.bertscore_fallback_used = text_metrics.get("bertscore_fallback_used")
         metric.chexbert_f1 = chexbert_score.get("chexbert_f1")
         metric.radgraph_f1 = radgraph_score.get("radgraph_f1")
+        metric.chexbert_fallback_used = chexbert_score.get("chexbert_fallback_used")
+        metric.radgraph_fallback_used = radgraph_score.get("radgraph_fallback_used")
         metric.hallucination_score = hallucination.get("hallucination_score")
 
     elif task == "vqa" and sample.answer_reference:
-        text_metrics = _compute_text_metrics(prediction.predicted_text or "", sample.answer_reference)
-        vqa = _get_evaluator("vqa").compute([prediction.predicted_text or ""], [sample.answer_reference])
+        text_metrics = _compute_vqa_metrics(prediction.predicted_text or "", sample.answer_reference)
         metric.bleu = text_metrics.get("bleu")
         metric.rouge_l = text_metrics.get("rouge_l")
         metric.meteor = text_metrics.get("meteor")
         metric.factual_correctness = text_metrics.get("factual_correctness")
-        metric.vqa_accuracy = vqa.get("accuracy")
-        metric.exact_match = 1.0 if (prediction.predicted_text or "").strip().lower() == sample.answer_reference.strip().lower() else 0.0
+        metric.token_precision = text_metrics.get("token_precision")
+        metric.token_recall = text_metrics.get("token_recall")
+        metric.token_f1 = text_metrics.get("token_f1")
+        metric.anls = text_metrics.get("anls")
+        metric.exact_match = text_metrics.get("exact_match")
+        metric.jaccard_similarity = text_metrics.get("jaccard_similarity")
+        metric.length_ratio = text_metrics.get("length_ratio")
+        metric.bleu_fallback_used = text_metrics.get("bleu_fallback_used")
+        metric.rouge_fallback_used = text_metrics.get("rouge_fallback_used")
+        metric.meteor_fallback_used = text_metrics.get("meteor_fallback_used")
+        metric.bertscore_fallback_used = text_metrics.get("bertscore_fallback_used")
 
     elif task == "grounding" and sample.bounding_boxes and prediction.predicted_bboxes:
-        pred_box = prediction.predicted_bboxes[0] if prediction.predicted_bboxes else None
-        ref_box = sample.bounding_boxes[0].to_dict() if sample.bounding_boxes else None
-        if pred_box and ref_box:
-            metric.bbox_iou = _get_evaluator("bbox")._compute_iou(pred_box, ref_box)
+        pred_boxes = prediction.predicted_bboxes or []
+        ref_boxes = [box.to_dict() for box in sample.bounding_boxes]
+        bbox_metrics = _get_evaluator("bbox").compute_set_metrics(pred_boxes, ref_boxes)
+        metric.bbox_iou = bbox_metrics.get("mean_iou")
+        metric.bbox_precision_025 = bbox_metrics.get("precision@0.25")
+        metric.bbox_precision_05 = bbox_metrics.get("precision@0.5")
+        metric.bbox_precision_075 = bbox_metrics.get("precision@0.75")
+        metric.bbox_recall_05 = bbox_metrics.get("recall@0.5")
+
+        if sample.findings_list:
+            reference_text = sample.findings_list[0]
+            text_metrics = _compute_text_metrics(prediction.predicted_text or "", reference_text)
+            metric.bleu = text_metrics.get("bleu")
+            metric.rouge_l = text_metrics.get("rouge_l")
+            metric.meteor = text_metrics.get("meteor")
+            metric.factual_correctness = text_metrics.get("factual_correctness")
+            metric.token_precision = text_metrics.get("token_precision")
+            metric.token_recall = text_metrics.get("token_recall")
+            metric.token_f1 = text_metrics.get("token_f1")
+            metric.anls = text_metrics.get("anls")
+            metric.exact_match = text_metrics.get("exact_match")
+            metric.jaccard_similarity = text_metrics.get("jaccard_similarity")
+            metric.length_ratio = text_metrics.get("length_ratio")
+            metric.bleu_fallback_used = text_metrics.get("bleu_fallback_used")
+            metric.rouge_fallback_used = text_metrics.get("rouge_fallback_used")
+            metric.meteor_fallback_used = text_metrics.get("meteor_fallback_used")
+            metric.bertscore_fallback_used = text_metrics.get("bertscore_fallback_used")
 
     return metric
 
@@ -326,18 +515,35 @@ def run_inference(model: Any, task: str, sample: RadiologySample) -> PredictionR
     return pred
 
 
-def compute_paired_stats(metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
-    tester = StatisticalTester(alpha=0.05)
+def compute_paired_stats(metrics: List[Dict[str, Any]], seed: int = 42) -> Dict[str, Any]:
+    tester = StatisticalTester(alpha=0.05, seed=seed)
     metric_fields = (
         "bleu",
         "rouge_l",
         "meteor",
         "factual_correctness",
+        "token_precision",
+        "token_recall",
+        "token_f1",
+        "anls",
+        "exact_match",
+        "jaccard_similarity",
+        "length_ratio",
+        "bleu_fallback_used",
+        "rouge_fallback_used",
+        "meteor_fallback_used",
+        "bertscore_fallback_used",
+        "chexbert_fallback_used",
+        "radgraph_fallback_used",
         "chexbert_f1",
         "radgraph_f1",
         "hallucination_score",
         "vqa_accuracy",
         "bbox_iou",
+        "bbox_precision_025",
+        "bbox_precision_05",
+        "bbox_precision_075",
+        "bbox_recall_05",
     )
 
     by_task_metric: Dict[str, Dict[str, Dict[str, float]]] = {}
@@ -380,6 +586,7 @@ def compute_paired_stats(metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
 def main() -> None:
     args = parse_args()
     setup_logging(level="DEBUG" if args.debug else "INFO")
+    set_global_seed(args.seed)
 
     manager = EnvironmentManager()
     preset = RuntimePreset(args.preset)
@@ -404,6 +611,7 @@ def main() -> None:
             "num_samples": args.num_samples,
             "backend": args.backend,
             "skip_inaccessible": args.skip_inaccessible,
+            "seed": args.seed,
         }
     )
     writer.save_environment(
@@ -413,6 +621,8 @@ def main() -> None:
             "preset_hardware": preset_cfg.get("hardware", {}),
             "preset_inference": preset_cfg.get("inference", {}),
             "selected_backend": args.backend,
+            "seed": args.seed,
+            "git_commit": get_git_commit_hash(),
         }
     )
 
@@ -468,6 +678,29 @@ def main() -> None:
             total_samples = len(dataset)
             for sample_index, raw in enumerate(dataset, start=1):
                 sample = normalize_sample(raw, dataset_name=dataset_name, split="test")
+                is_valid_sample, validation_error = validate_sample_for_task(sample, task)
+                if not is_valid_sample:
+                    writer.append_error(
+                        {
+                            "sample_id": sample.sample_id,
+                            "dataset_name": dataset_name,
+                            "model_name": model_name,
+                            "task": task,
+                            "error": validation_error,
+                            "error_type": "sample_validation",
+                        }
+                    )
+                    if args.strict_sample_validation:
+                        raise RuntimeError(
+                            f"Invalid sample for task={task}, sample_id={sample.sample_id}: {validation_error}"
+                        )
+                    logger.warning(
+                        "Skipping invalid sample task=%s sample_id=%s reason=%s",
+                        task,
+                        sample.sample_id,
+                        validation_error,
+                    )
+                    continue
 
                 sample_preview = (
                     sample.question
@@ -529,8 +762,23 @@ def main() -> None:
 
     aggregate = writer.compute_and_save_aggregate_metrics()
     sample_metrics = writer.load_sample_metrics()
-    stats = compute_paired_stats(sample_metrics)
+    stats = compute_paired_stats(sample_metrics, seed=args.seed)
+    fallback_rates = compute_fallback_rates(sample_metrics)
+    if fallback_rates:
+        stats["_meta_fallback_rates"] = fallback_rates
     writer.save_statistics(stats)
+
+    if args.max_fallback_rate < 1.0:
+        exceeded = {
+            key: value
+            for key, value in fallback_rates.items()
+            if value > args.max_fallback_rate
+        }
+        if exceeded:
+            raise RuntimeError(
+                "Fallback rate threshold exceeded: "
+                + ", ".join(f"{k}={v:.3f}" for k, v in exceeded.items())
+            )
 
     logger.info("Run completed. Models=%d Aggregate sets=%d", len(runnable_models), len(aggregate))
     logger.info(writer.get_result_summary())

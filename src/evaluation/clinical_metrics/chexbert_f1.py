@@ -86,6 +86,7 @@ class CheXbertF1Evaluator(BaseEvaluator):
             "chexbert_micro_f1": float(micro_f1),
             "chexbert_macro_f1": float(macro_f1),
             "chexbert_f1": float(macro_f1),
+            "chexbert_fallback_used": 0.0 if self._model_is_available else 1.0,
         }
 
     def _predict_with_model(self, reports: List[str]) -> List[Set[str]]:

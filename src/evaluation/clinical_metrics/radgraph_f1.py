@@ -89,6 +89,7 @@ class RadGraphF1Evaluator(BaseEvaluator):
                 "radgraph_f1": 0.0,
                 "radgraph_entity_f1": 0.0,
                 "radgraph_relation_f1": 0.0,
+                "radgraph_fallback_used": 0.0 if self._model_is_available else 1.0,
             }
 
         blend_p, blend_r, blend_f1 = self._mean_prf(blended_scores)
@@ -101,6 +102,7 @@ class RadGraphF1Evaluator(BaseEvaluator):
             "radgraph_f1": float(blend_f1),
             "radgraph_entity_f1": float(entity_f1),
             "radgraph_relation_f1": float(relation_f1),
+            "radgraph_fallback_used": 0.0 if self._model_is_available else 1.0,
         }
 
     @staticmethod

@@ -13,8 +13,18 @@ from typing import Dict, List, Tuple
 class StatisticalTester:
     """Statistical significance testing for model comparisons."""
     
-    def __init__(self, alpha: float = 0.05):
+    def __init__(self, alpha: float = 0.05, seed: int = 42):
         self.alpha = alpha
+        self.seed = seed
+
+    def _validate_pairwise_inputs(
+        self,
+        scores_a: List[float],
+        scores_b: List[float],
+        min_samples: int = 3,
+    ) -> bool:
+        """Ensure pairwise tests only run on aligned, minimally sized samples."""
+        return len(scores_a) == len(scores_b) and len(scores_a) >= min_samples
     
     def paired_t_test(
         self,
@@ -22,8 +32,14 @@ class StatisticalTester:
         scores_b: List[float]
     ) -> Dict[str, float]:
         """Perform paired t-test."""
-        from scipy import stats
-        
+        if not self._validate_pairwise_inputs(scores_a, scores_b):
+            return {"statistic": 0.0, "p_value": 1.0, "significant": False}
+
+        try:
+            from scipy import stats
+        except ImportError:
+            return {"statistic": 0.0, "p_value": 1.0, "significant": False}
+
         statistic, p_value = stats.ttest_rel(scores_a, scores_b)
         
         return {
@@ -38,7 +54,13 @@ class StatisticalTester:
         scores_b: List[float]
     ) -> Dict[str, float]:
         """Perform Wilcoxon signed-rank test."""
-        from scipy import stats
+        if not self._validate_pairwise_inputs(scores_a, scores_b):
+            return {"statistic": 0.0, "p_value": 1.0, "significant": False}
+
+        try:
+            from scipy import stats
+        except ImportError:
+            return {"statistic": 0.0, "p_value": 1.0, "significant": False}
         
         try:
             statistic, p_value = stats.wilcoxon(scores_a, scores_b)
@@ -60,12 +82,15 @@ class StatisticalTester:
     ) -> Tuple[float, float]:
         """Compute bootstrap confidence interval."""
         import numpy as np
-        
+        if not scores:
+            return 0.0, 0.0
+
         scores = np.array(scores)
         bootstrap_means = []
+        rng = np.random.default_rng(self.seed)
         
         for _ in range(n_bootstrap):
-            sample = np.random.choice(scores, size=len(scores), replace=True)
+            sample = rng.choice(scores, size=len(scores), replace=True)
             bootstrap_means.append(np.mean(sample))
         
         lower = np.percentile(bootstrap_means, (1 - confidence) / 2 * 100)

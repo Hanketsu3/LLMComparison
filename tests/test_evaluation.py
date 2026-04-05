@@ -8,6 +8,7 @@ Test Coverage:
 """
 
 import pytest
+import importlib.util
 
 
 @pytest.mark.evaluation
@@ -93,6 +94,9 @@ class TestBLEU:
     """Test BLEU evaluator."""
     
     def test_bleu_compute(self):
+        if importlib.util.find_spec("evaluate") is None and importlib.util.find_spec("nltk") is None:
+            pytest.skip("BLEU dependencies (evaluate or nltk) are not installed in this environment.")
+
         from src.evaluation.nlp_metrics.bleu import BLEUEvaluator
         
         evaluator = BLEUEvaluator()
@@ -132,11 +136,34 @@ class TestBBoxEvaluator:
         iou = evaluator._compute_iou(pred, ref)
         assert iou == 0.0
 
+    def test_compute_set_metrics_multi_bbox(self):
+        from src.evaluation.grounding.bbox_metrics import BBoxEvaluator
+
+        evaluator = BBoxEvaluator()
+        preds = [
+            {"x_min": 0, "y_min": 0, "x_max": 10, "y_max": 10},
+            {"x_min": 20, "y_min": 20, "x_max": 30, "y_max": 30},
+        ]
+        refs = [
+            {"x_min": 0, "y_min": 0, "x_max": 10, "y_max": 10},
+            {"x_min": 100, "y_min": 100, "x_max": 110, "y_max": 110},
+        ]
+
+        out = evaluator.compute_set_metrics(preds, refs)
+        assert "mean_iou" in out
+        assert "precision@0.5" in out
+        assert "recall@0.5" in out
+        assert out["precision@0.5"] == pytest.approx(0.5)
+        assert out["recall@0.5"] == pytest.approx(0.5)
+
 
 class TestStatisticalTester:
     """Test statistical testing utilities."""
     
     def test_paired_t_test(self):
+        if importlib.util.find_spec("scipy") is None:
+            pytest.skip("scipy is not installed in this environment.")
+
         from src.utils.statistical_tests import StatisticalTester
         
         tester = StatisticalTester(alpha=0.05)
@@ -153,7 +180,7 @@ class TestStatisticalTester:
     def test_bootstrap_ci(self):
         from src.utils.statistical_tests import StatisticalTester
         
-        tester = StatisticalTester()
+        tester = StatisticalTester(seed=7)
         
         scores = [0.8, 0.85, 0.82, 0.88, 0.84]
         lower, upper = tester.bootstrap_confidence_interval(scores)
@@ -161,3 +188,15 @@ class TestStatisticalTester:
         assert lower < upper
         assert lower > 0.7
         assert upper < 0.95
+
+    def test_bootstrap_ci_is_deterministic_with_seed(self):
+        from src.utils.statistical_tests import StatisticalTester
+
+        scores = [0.8, 0.85, 0.82, 0.88, 0.84]
+        tester_a = StatisticalTester(seed=17)
+        tester_b = StatisticalTester(seed=17)
+
+        ci_a = tester_a.bootstrap_confidence_interval(scores, n_bootstrap=200)
+        ci_b = tester_b.bootstrap_confidence_interval(scores, n_bootstrap=200)
+
+        assert ci_a == ci_b

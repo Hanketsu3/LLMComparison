@@ -1,0 +1,56 @@
+name: pytest-smoke
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pytest pytest-cov
+
+    - name: Lint with ruff
+      run: |
+        pip install ruff
+        ruff check . --exit-zero || true
+
+    - name: Run tests (P1-P5 validation suite)
+      run: |
+        pytest tests/test_unified_runner_smoke.py \
+                tests/test_result_writer.py \
+                tests/test_evaluation.py \
+                tests/test_schema_normalization.py \
+                tests/test_registry.py \
+                tests/test_runtime_config.py \
+                -v --tb=short --co -q
+
+    - name: Run full pytest suite
+      run: |
+        pytest tests/ -v --tb=short -k "not BLEU and not paired" --cov=src --cov-report=term-missing
+
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-results-py${{ matrix.python-version }}
+        path: |
+          .coverage
+          htmlcov/

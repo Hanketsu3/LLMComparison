@@ -120,6 +120,9 @@ python experiments/run_unified.py \
   --models qwen2-vl-2b \
   --datasets hf_vqa_rad \
   --num-samples 5 \
+  --seed 42 \
+  --max-fallback-rate 0.50 \
+  --strict-sample-validation \
   --skip-inaccessible \
   --output-dir results \
   --run-name smoke_cpu_qwen
@@ -132,6 +135,8 @@ python experiments/run_unified.py \
   --models generalist \
   --datasets hf_vqa_rad \
   --num-samples 50 \
+  --seed 42 \
+  --max-fallback-rate 0.50 \
   --skip-inaccessible \
   --output-dir results \
   --run-name colab_t4_generalist
@@ -144,10 +149,17 @@ python experiments/run_unified.py \
   --models main \
   --datasets hf_iu_xray hf_vqa_rad \
   --num-samples 120 \
+  --seed 42 \
+  --max-fallback-rate 0.30 \
   --skip-inaccessible \
   --output-dir results \
   --run-name gpu24_main
 ```
+
+Yeni guardrail bayraklari:
+- `--seed`: tekrar uretilebilir kosu icin sabit RNG tohumu
+- `--max-fallback-rate`: `*_fallback_used` ortalamasi bu esigi asarsa kosu fail olur
+- `--strict-sample-validation`: task icin zorunlu alanlari saglamayan sample'larda kosuyu durdurur
 
 ## Common failure cases
 
@@ -162,6 +174,8 @@ python experiments/run_unified.py \
 - Her kosunun config ve environment snapshot'i kaydedilir.
 - Sample-level prediction ve metric kaydi tutulur.
 - Paired statistics sample-level dizi uzerinden hesaplanir.
+- Seed kontrollu deterministic kosu desteklenir (`--seed`).
+- Fallback oranlari stats metadata altinda raporlanir (`_meta_fallback_rates`).
 
 ## Testler
 

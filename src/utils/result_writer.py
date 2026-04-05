@@ -7,13 +7,18 @@ for reproducibility and downstream analysis.
 
 import json
 import logging
+import math
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-import torch
+
+try:
+    import torch
+except ImportError:  # pragma: no cover - optional in lightweight test environments
+    torch = None
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +66,22 @@ class SampleMetric:
     bleu: Optional[float] = None
     rouge_l: Optional[float] = None
     meteor: Optional[float] = None
+    token_precision: Optional[float] = None
+    token_recall: Optional[float] = None
+    token_f1: Optional[float] = None
+    anls: Optional[float] = None
+    jaccard_similarity: Optional[float] = None
+    length_ratio: Optional[float] = None
+    bleu_fallback_used: Optional[float] = None
+    rouge_fallback_used: Optional[float] = None
+    meteor_fallback_used: Optional[float] = None
+    bertscore_fallback_used: Optional[float] = None
     
     # Clinical metrics (radiology-specific)
     radgraph_f1: Optional[float] = None
     chexbert_f1: Optional[float] = None
+    radgraph_fallback_used: Optional[float] = None
+    chexbert_fallback_used: Optional[float] = None
     
     # VQA metrics
     exact_match: Optional[float] = None
@@ -72,6 +89,10 @@ class SampleMetric:
     
     # Grounding metrics
     bbox_iou: Optional[float] = None
+    bbox_precision_025: Optional[float] = None
+    bbox_precision_05: Optional[float] = None
+    bbox_precision_075: Optional[float] = None
+    bbox_recall_05: Optional[float] = None
     
     # Hallucination / Safety
     hallucination_score: Optional[float] = None
@@ -125,8 +146,8 @@ class ResultWriter:
         env_to_save = {
             "timestamp": datetime.now().isoformat(),
             "python_version": self._get_python_version(),
-            "torch_version": torch.__version__,
-            "torch_cuda_available": torch.cuda.is_available(),
+            "torch_version": getattr(torch, "__version__", None),
+            "torch_cuda_available": bool(torch.cuda.is_available()) if torch is not None else False,
             **env_info,
         }
         with open(self.environment_file, "w") as f:
@@ -228,7 +249,7 @@ class ResultWriter:
                 key
                 for record in sample_metrics
                 for key, value in record.items()
-                if key not in identifier_keys and isinstance(value, (int, float)) and value is not None
+                if key not in identifier_keys and isinstance(value, (int, float)) and value is not None and math.isfinite(float(value))
             }
         )
         
@@ -238,7 +259,11 @@ class ResultWriter:
             
             # Iterate over every numeric metric found in sample-level records.
             for metric_name in metric_keys:
-                values = [r[metric_name] for r in records if metric_name in r and r[metric_name] is not None]
+                values = [
+                    float(r[metric_name])
+                    for r in records
+                    if metric_name in r and r[metric_name] is not None and math.isfinite(float(r[metric_name]))
+                ]
                 
                 if values:
                     aggregate[model_name][f"{metric_name}_mean"] = float(np.mean(values))

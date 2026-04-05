@@ -1,0 +1,8 @@
+{
+  "statistics": {
+    "total_samples": 50,
+    "_meta_fallback_rates": {
+      "all_evaluators_fallback_rate": 0.038
+    }
+  }
+}

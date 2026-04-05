@@ -21,19 +21,23 @@ class BLEUEvaluator(BaseEvaluator):
         # Guard against empty predictions
         non_empty = [(p, r) for p, r in zip(predictions, references) if p and p.strip()]
         if not non_empty:
-            return {"bleu": 0.0, "bleu_1": 0.0, "bleu_4": 0.0}
+            return {"bleu": 0.0, "bleu_1": 0.0, "bleu_4": 0.0, "bleu_fallback_used": 0.0}
         predictions, references = zip(*non_empty)
         predictions, references = list(predictions), list(references)
         try:
             from evaluate import load
             bleu = load("bleu")
         except ImportError:
-            from nltk.translate.bleu_score import corpus_bleu
-            # Tokenize
-            pred_tokens = [p.split() for p in predictions]
-            ref_tokens = [[r.split()] for r in references]
-            score = corpus_bleu(ref_tokens, pred_tokens)
-            return {"bleu": score}
+            try:
+                from nltk.translate.bleu_score import corpus_bleu
+
+                # Tokenize
+                pred_tokens = [p.split() for p in predictions]
+                ref_tokens = [[r.split()] for r in references]
+                score = corpus_bleu(ref_tokens, pred_tokens)
+                return {"bleu": score, "bleu_1": 0.0, "bleu_4": 0.0, "bleu_fallback_used": 1.0}
+            except Exception:
+                return {"bleu": 0.0, "bleu_1": 0.0, "bleu_4": 0.0, "bleu_fallback_used": 1.0}
         
         # Format references for HuggingFace evaluate
         refs = [[r] for r in references]
@@ -43,4 +47,5 @@ class BLEUEvaluator(BaseEvaluator):
             "bleu": result.get("bleu", 0),
             "bleu_1": result.get("precisions", [0])[0] if result.get("precisions") else 0,
             "bleu_4": result.get("precisions", [0, 0, 0, 0])[3] if len(result.get("precisions", [])) > 3 else 0,
+            "bleu_fallback_used": 0.0,
         }

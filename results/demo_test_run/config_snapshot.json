@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-04-05T10:00:00",
+  "seed": 42,
+  "models": [
+    "qwen2-vl-2b",
+    "phi-3.5-vision",
+    "internvl2-2b"
+  ],
+  "datasets": [
+    "hf_vqa_rad",
+    "hf_grounding_rad"
+  ],
+  "num_samples": 50
+}

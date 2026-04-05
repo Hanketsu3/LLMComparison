@@ -69,6 +69,31 @@ jupyter notebook notebooks/00_repo_smoke_test.ipynb
 
 ---
 
+## ✅ Benchmark Quality Guardrails (New)
+
+`run_unified.py` now supports reproducibility and metric-quality controls:
+
+```bash
+python experiments/run_unified.py \
+    --preset free_colab_t4 \
+    --models qwen2-vl-2b \
+    --datasets hf_vqa_rad \
+    --num-samples 20 \
+    --seed 42 \
+    --max-fallback-rate 0.50 \
+    --strict-sample-validation \
+    --skip-inaccessible \
+    --output-dir results \
+    --run-name guarded_vqa_run
+```
+
+Notes:
+- `--seed`: deterministic run state for repeatability.
+- `--max-fallback-rate`: fails run if fallback metric usage exceeds threshold.
+- `--strict-sample-validation`: fails on invalid sample schema/task mismatch instead of skipping.
+
+---
+
 ## 🔧 For Developers: Integration Checklist
 
 ### **WEEK 1: Foundation Integration**

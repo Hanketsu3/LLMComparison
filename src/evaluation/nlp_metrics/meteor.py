@@ -14,7 +14,7 @@ class METEOREvaluator(BaseEvaluator):
     def compute(self, predictions: List[str], references: List[str], **kwargs) -> Dict[str, float]:
         non_empty = [(p, r) for p, r in zip(predictions, references) if p and p.strip()]
         if not non_empty:
-            return {"meteor": 0.0}
+            return {"meteor": 0.0, "meteor_fallback_used": 0.0}
         predictions, references = zip(*non_empty)
         predictions, references = list(predictions), list(references)
 
@@ -23,6 +23,6 @@ class METEOREvaluator(BaseEvaluator):
 
             meteor = load("meteor")
             result = meteor.compute(predictions=predictions, references=references)
-            return {"meteor": float(result.get("meteor", 0.0))}
+            return {"meteor": float(result.get("meteor", 0.0)), "meteor_fallback_used": 0.0}
         except Exception:
-            return {"meteor": 0.0}
+            return {"meteor": 0.0, "meteor_fallback_used": 1.0}

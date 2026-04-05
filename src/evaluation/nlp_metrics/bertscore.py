@@ -1,8 +1,12 @@
 """BERTScore evaluator for semantic similarity in report generation."""
 
+import logging
 from typing import Dict, List
 
 from src.evaluation.base_evaluator import BaseEvaluator
+
+
+logger = logging.getLogger(__name__)
 
 
 class BERTScoreEvaluator(BaseEvaluator):
@@ -11,7 +15,7 @@ class BERTScoreEvaluator(BaseEvaluator):
     Returns precision/recall/f1 means across samples.
     """
 
-    def __init__(self, model_type: str = "microsoft/deberta-xlarge-mnli", lang: str = "en", **kwargs):
+    def __init__(self, model_type: str = "distilbert-base-uncased", lang: str = "en", **kwargs):
         super().__init__(name="bertscore", **kwargs)
         self.model_type = model_type
         self.lang = lang
@@ -23,6 +27,7 @@ class BERTScoreEvaluator(BaseEvaluator):
                 "bertscore_precision": 0.0,
                 "bertscore_recall": 0.0,
                 "bertscore_f1": 0.0,
+                "bertscore_fallback_used": 0.0,
             }
         predictions, references = zip(*non_empty)
         predictions, references = list(predictions), list(references)
@@ -44,10 +49,13 @@ class BERTScoreEvaluator(BaseEvaluator):
                 "bertscore_precision": float(sum(p_vals) / len(p_vals)) if p_vals else 0.0,
                 "bertscore_recall": float(sum(r_vals) / len(r_vals)) if r_vals else 0.0,
                 "bertscore_f1": float(sum(f_vals) / len(f_vals)) if f_vals else 0.0,
+                "bertscore_fallback_used": 0.0,
             }
-        except Exception:
+        except Exception as exc:
+            logger.warning("BERTScore computation failed: %s", exc)
             return {
                 "bertscore_precision": 0.0,
                 "bertscore_recall": 0.0,
                 "bertscore_f1": 0.0,
+                "bertscore_fallback_used": 1.0,
             }

@@ -449,7 +449,8 @@ def main() -> None:
             if hasattr(model, "load"):
                 model.load()
 
-            for raw in dataset:
+            total_samples = len(dataset)
+            for sample_index, raw in enumerate(dataset, start=1):
                 sample = normalize_sample(raw, dataset_name=dataset_name, split="test")
                 pred = run_inference(model, task=task, sample=sample)
                 writer.append_prediction(pred)
@@ -468,6 +469,14 @@ def main() -> None:
                             "error_type": pred.error_type,
                         }
                     )
+
+                logger.info(
+                    "Progress model=%s dataset=%s sample=%s/%s",
+                    model_name,
+                    dataset_name,
+                    sample_index,
+                    total_samples,
+                )
 
             del model
             try:

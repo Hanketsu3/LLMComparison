@@ -7,6 +7,7 @@ bitsandbytes
 
 # Vision
 Pillow
+num2words
 
 # Data processing
 pandas

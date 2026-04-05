@@ -18,6 +18,7 @@
 # --------------------
 # Model                    Environment        Notes
 # ─────────────────────────────────────────────────────────────────────────
+# General HF fallback      generic_hf.yaml    Recommended default for mixed local runs
 # Qwen2/3-VL series        qwen.yaml          Requires qwen-vl-utils
 # Phi-3.5-Vision           phi.yaml           Minimal special deps
 # InternVL2 series         internvl.yaml      Requires trust_remote_code
@@ -29,6 +30,7 @@
 #
 # TRANSFORMER VERSION PINNING:
 # ----------------------------
+# - generic_hf.yaml: transformers>=4.45.0,<4.58.0 (recommended baseline)
 # - base.yaml:       transformers>=4.35.0
 # - qwen.yaml:       transformers>=4.36.0 (Qwen2-VL processor fix)
 # - phi.yaml:        transformers>=4.40.0 (Phi-3.5 recent fix)

@@ -1,0 +1,8 @@
+{
+  "qwen2-vl-2b": {
+    "accessible": true,
+    "requires_key": false,
+    "reason": "ok",
+    "message": "Model 'qwen2-vl-2b' is accessible."
+  }
+}

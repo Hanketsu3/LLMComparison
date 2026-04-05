@@ -154,7 +154,7 @@ class RadiologySample:
         """Check if sample has required fields for a task."""
         task = task.lower()
         if task == "rrg" or task == "report_generation":
-            return (self.image_path or self.image_path or self.image) and self.report_reference
+            return (self.image_path or self.image_paths or self.image) and self.report_reference
         elif task == "vqa" or task == "visual_question_answering":
             return (self.image_path or self.image_paths or self.image) and self.question and self.answer_reference
         elif task == "grounding" or task == "localization":

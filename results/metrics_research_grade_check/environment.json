@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-01T13:24:05.476250",
+  "python_version": "3.13.12",
+  "torch_version": "2.10.0",
+  "torch_cuda_available": false,
+  "runtime_preset": "smoke_cpu",
+  "environment_profile": "base",
+  "preset_hardware": {
+    "device": "cpu",
+    "precision": "fp32",
+    "max_memory_gb": 8
+  },
+  "preset_inference": {
+    "quantization": null,
+    "batch_size": 1,
+    "image_size": 224,
+    "num_crops": 1,
+    "max_new_tokens": 50,
+    "num_threads": 4,
+    "enable_kv_cache": false
+  },
+  "selected_backend": "auto"
+}

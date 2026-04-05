@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-04-01T13:24:05.476048",
+  "config": {
+    "preset": "smoke_cpu",
+    "datasets": [
+      "hf_vqa_rad"
+    ],
+    "models": [
+      "qwen2-vl-2b"
+    ],
+    "num_samples": 1,
+    "backend": "auto",
+    "skip_inaccessible": true
+  }
+}

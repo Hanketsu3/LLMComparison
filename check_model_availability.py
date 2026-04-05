@@ -7,23 +7,25 @@ This is a lightweight pre-flight check before running full experiment.
 import sys
 from huggingface_hub import model_info, ModelNotFound
 
-# Models to verify (lane-based shortlist in run_full_experiment notebook)
+# Models to verify (main benchmark only)
 MODELS_TO_CHECK = {
-    # Generalist lane
+    # Generalist lane (main)
     "qwen3-vl-2b": "Qwen/Qwen3-VL-2B-Instruct",
     "qwen2.5-vl-3b": "Qwen/Qwen2.5-VL-3B-Instruct",
     "phi3-vision": "microsoft/Phi-3.5-vision-instruct",
     "qwen2-vl-2b": "Qwen/Qwen2-VL-2B-Instruct",
     "smolvlm2-2.2b": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+    "internvl2-2b": "OpenGVLab/InternVL2-2B",
+    "internvl2-4b": "OpenGVLab/InternVL2-4B",
     "llama3-vision": "meta-llama/Llama-3.2-11B-Vision-Instruct",
-    # Domain-adaptive lane
-    "qwen2-vl-ocr-2b": "prithivMLmods/Qwen2-VL-OCR-2B-Instruct",
-    "latxa-qwen3-vl-2b": "HiTZ/Latxa-Qwen3-VL-2B-Instruct",
+    # Domain-adaptive lane (main)
+    "llava-med": "microsoft/llava-med-v1.5-vicuna-7b",
     "medgemma-4b": "google/medgemma-4b-it",
-    # Specialist lane
-    "got-ocr2": "stepfun-ai/GOT-OCR-2.0-hf",
-    "nougat-base": "facebook/nougat-base",
-    "matcha-chartqa": "google/matcha-chartqa",
+    "biomedgpt": "PharMolix/BiomedGPT-LM-7B",
+    # Specialist lane (main)
+    "chexagent": "StanfordAIMI/CheXagent-8b",
+    "llava-rad": "microsoft/llava-rad",
+    "radfm": "StanfordAIMI/RadFM-7B",
 }
 
 def check_model_availability():

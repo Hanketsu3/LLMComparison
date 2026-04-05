@@ -1,0 +1,88 @@
+{
+  "qwen2-vl-2b": {
+    "accessible": true,
+    "requires_key": false,
+    "reason": "ok",
+    "message": "Model 'qwen2-vl-2b' is accessible."
+  },
+  "qwen2.5-vl-3b": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'qwen2.5-vl-3b' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "qwen3-vl-2b": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'qwen3-vl-2b' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "phi3-vision": {
+    "accessible": true,
+    "requires_key": false,
+    "reason": "ok",
+    "message": "Model 'phi3-vision' is accessible."
+  },
+  "smolvlm2-2.2b": {
+    "accessible": true,
+    "requires_key": false,
+    "reason": "ok",
+    "message": "Model 'smolvlm2-2.2b' is accessible."
+  },
+  "internvl2-2b": {
+    "accessible": true,
+    "requires_key": false,
+    "reason": "ok",
+    "message": "Model 'internvl2-2b' is accessible."
+  },
+  "internvl2-4b": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'internvl2-4b' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "llama3-vision": {
+    "accessible": false,
+    "requires_key": true,
+    "reason": "gated_access",
+    "message": "Model 'llama3-vision' requires HuggingFace gated access approval.\nSteps:\n  1. Accept terms: https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct\n  2. Get API token: https://huggingface.co/settings/tokens\n  3. Login: huggingface-cli login",
+    "fix_url": "https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct"
+  },
+  "llava-med": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'llava-med' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "medgemma-4b": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'medgemma-4b' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "biomedgpt": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'biomedgpt' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "chexagent": {
+    "accessible": false,
+    "requires_key": true,
+    "reason": "gated_access",
+    "message": "Model 'chexagent' requires HuggingFace gated access approval.\nSteps:\n  1. Accept terms: https://huggingface.co/StanfordAIMI/CheXagent-8b\n  2. Get API token: https://huggingface.co/settings/tokens\n  3. Login: huggingface-cli login",
+    "fix_url": "https://huggingface.co/StanfordAIMI/CheXagent-8b"
+  },
+  "llava-rad": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'llava-rad' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  },
+  "radfm": {
+    "accessible": false,
+    "requires_key": false,
+    "reason": "insufficient_vram",
+    "message": "Model 'radfm' typically needs 4-bit quantization on <=16GB VRAM. Preset quantization is None."
+  }
+}

@@ -8,7 +8,7 @@
 # - Token generation limits
 # - Memory optimizations
 
-presets: {}
+schema_version: 1
 
 # ============================================================================
 # PRESET: smoke_cpu
@@ -197,6 +197,7 @@ gpu_24g:
     - "biomedgpt"           # 7B
     - "chexagent"           # 8B specialist
     - "llava-rad"           # 8B specialist
+    - "radfm"               # 7B specialist
   
   inference:
     quantization: null  # Use bf16 (Ampere native)

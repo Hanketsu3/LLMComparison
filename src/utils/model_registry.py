@@ -2,8 +2,8 @@
 Model Registry - Organize models by category and benchmark tier
 
 Synced with src/configs/model_taxonomy.py:
-- MAIN benchmark (13 models): radiology-focused
-- EXTRA track (8 models): out-of-scope experimental track
+- MAIN benchmark (14 models): radiology-focused
+- EXTRA track (7 models): out-of-scope experimental track
 """
 
 from dataclasses import dataclass, field
@@ -26,22 +26,22 @@ class ModelCategory(Enum):
 
 class BenchmarkTier(Enum):
     """Benchmark tier classification."""
-    MAIN = "main"      # Core radiology comparison (13 models)
-    EXTRA = "extra"    # Out-of-scope experimental track (8 models)
+    MAIN = "main"      # Core radiology comparison (14 models)
+    EXTRA = "extra"    # Out-of-scope experimental track (7 models)
 
 
 @dataclass
 class ModelInfo:
     """Information about a model."""
     name: str
-    display_name: str
-    category: ModelCategory
-    cost: ModelCost
-    module_path: str
-    class_name: str
-    params: str  # Parameter count (e.g., "7B", "2B")
-    description: str
-    colab_t4_native: bool  # Runs on Colab T4 without quantization
+    display_name: str = ""
+    category: ModelCategory = ModelCategory.GENERALIST
+    cost: ModelCost = ModelCost.FREE
+    module_path: str = ""
+    class_name: str = ""
+    params: str = "unknown"  # Parameter count (e.g., "7B", "2B")
+    description: str = ""
+    colab_t4_native: bool = False  # Runs on Colab T4 without quantization
     benchmark_tier: BenchmarkTier = BenchmarkTier.MAIN  # NEW: Tier classification
     needs_4bit: bool = False  # Requires 4-bit quantization for T4
     supports_grounding: bool = False
@@ -55,7 +55,7 @@ class ModelInfo:
 
 
 # ============================================================================
-# MODEL REGISTRY - MAIN BENCHMARK (13 Models)
+# MODEL REGISTRY - MAIN BENCHMARK (14 Models)
 # ============================================================================
 
 MODEL_REGISTRY: Dict[str, ModelInfo] = {
@@ -270,7 +270,7 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
     ),
     
     # =========================================================================
-    # EXTRA TRACK (8 Models) - Out-of-scope experimental
+    # EXTRA TRACK (7 Models) - Out-of-scope experimental
     # =========================================================================
     
     # --- OCR / Document Analysis ---
@@ -378,12 +378,12 @@ MODEL_REGISTRY: Dict[str, ModelInfo] = {
 # ============================================================================
 
 def get_main_benchmark_models() -> List[str]:
-    """Get all MAIN benchmark model names (13 models)."""
+    """Get all MAIN benchmark model names (14 models)."""
     return [m.name for m in MODEL_REGISTRY.values() if m.benchmark_tier == BenchmarkTier.MAIN]
 
 
 def get_extra_track_models() -> List[str]:
-    """Get all EXTRA track model names (8 models)."""
+    """Get all EXTRA track model names (7 models)."""
     return [m.name for m in MODEL_REGISTRY.values() if m.benchmark_tier == BenchmarkTier.EXTRA]
 
 
@@ -431,6 +431,7 @@ def check_model_access(name: str) -> Dict[str, Any]:
     if not info:
         return {
             "accessible": False,
+            "requires_key": False,
             "reason": "model_not_found",
             "message": f"Model '{name}' not in registry. Available main models: {get_main_benchmark_models()}",
         }
@@ -439,6 +440,7 @@ def check_model_access(name: str) -> Dict[str, Any]:
     if info.gated_access:
         return {
             "accessible": False,
+            "requires_key": True,
             "reason": "gated_access",
             "message": f"Model '{name}' requires HuggingFace gated access approval.\n"
                       f"Steps:\n"
@@ -455,23 +457,31 @@ def check_model_access(name: str) -> Dict[str, Any]:
         if not os.environ.get(api_key_var):
             return {
                 "accessible": False,
+                "requires_key": True,
                 "reason": "missing_api_key",
                 "message": f"Model '{name}' requires {api_key_var} environment variable.\n"
                           f"Set: export {api_key_var}='your-key-here'",
             }
     
-    return {"accessible": True, "reason": "ok", "message": f"Model '{name}' is accessible."}
+    return {
+        "accessible": True,
+        "requires_key": False,
+        "reason": "ok",
+        "message": f"Model '{name}' is accessible.",
+    }
 
 
-def load_model(name: str):
-    """Dynamically load and instantiate a model."""
+def load_model(name: str, **overrides):
+    """Dynamically load and instantiate a model.
+
+    Args:
+        name: Registry key for model.
+        **overrides: Optional runtime overrides merged into default kwargs.
+    """
     # Check access first
     access = check_model_access(name)
     if not access["accessible"]:
-        extra_msg = ""
-        if access["reason"] == BenchmarkTier.EXTRA.value:
-            extra_msg = f"\nNote: This model is in EXTRA TRACK (out-of-scope). See GATING_REQUIREMENTS.md for setup."
-        raise RuntimeError(f"{access['message']}{extra_msg}")
+        raise RuntimeError(access["message"])
     
     info = get_model_info(name)
     if not info:
@@ -479,9 +489,13 @@ def load_model(name: str):
     
     import importlib
     try:
+        if not info.module_path or not info.class_name:
+            raise ImportError(f"Model '{name}' has incomplete registry entry: module/class missing")
+
         module = importlib.import_module(info.module_path)
         model_class = getattr(module, info.class_name)
-        return model_class(**info.default_kwargs)
+        kwargs = {**info.default_kwargs, **overrides}
+        return model_class(**kwargs)
     except ModuleNotFoundError as e:
         raise ImportError(f"Cannot import {info.module_path}: {e}. Ensure model code is available.")
     except AttributeError as e:
@@ -491,7 +505,7 @@ def load_model(name: str):
 def print_model_table():
     """Print a formatted table of all models organized by tier and category."""
     print("\n" + "="*100)
-    print("🎯 MAIN BENCHMARK MODELS (13)")
+    print("🎯 MAIN BENCHMARK MODELS (14)")
     print("="*100)
     print(f"{'Model':<25} {'Category':<15} {'Params':<8} {'T4 GPU':<12} {'Access':<15} Description")
     print("-"*100)
@@ -503,7 +517,7 @@ def print_model_table():
         
         if tier == BenchmarkTier.EXTRA:
             print("\n" + "="*100)
-            print("📚 EXTRA TRACK MODELS (8 - Out of Scope)")
+            print("📚 EXTRA TRACK MODELS (7 - Out of Scope)")
             print("="*100)
             print(f"{'Model':<25} {'Category':<15} {'Params':<8} {'T4 GPU':<12} {'Access':<15} Description")
             print("-"*100)

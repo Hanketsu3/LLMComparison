@@ -1,154 +1,171 @@
-# 🏥 Radyoloji için Özgü vs Genel Amaçlı LLM Karşılaştırması
+# LLMComparison - Radiology VLM Benchmark
 
-Bu proje, radyaloji alanında **Genel Amaçlı (Generalist)** ve **Alan Uyarlamalı/Uzman (Specialist)** Çok Modlu Büyük Dil Modellerinin (LMM) performanslarını karşılaştırmak için geliştirilmiş bir araştırma altyapısıdır.
+Bu repo, radyoloji odakli 3 gorev icin model karsilastirmasi yapar:
+- RRG (Radiology Report Generation)
+- VQA (Visual Question Answering)
+- Grounding / localization
 
-Proje, hem akademik bir kıyaslama çalışması sunmakta hem de öğrencilerin/araştırmacıların kendi deneylerini yapabilmesi için hazır bir şablon sağlamaktadır.
+## Benchmark kapsami
 
----
+Ana benchmark lane'leri:
+- Generalist
+- Domain-adaptive
+- Specialist
 
-## 🧪 Araştırma Kapsamı ve Hipotezler
+Opsiyonel extra track:
+- OCR / document parsing
+- chart QA
+- language adaptation
+- API-only modeller
 
-Bu çalışma, aşağıdaki üç ana eksende modelleri kıyaslar:
+Model taxonomy tek noktadan yonetilir:
+- src/utils/model_registry.py
+- src/configs/model_taxonomy.py
 
-### 1. Model Kategorileri
-| Kategori | Tanım | Örnekler | Araştırma Sorusu |
-|----------|-------|----------|------------------|
-| **Generalist** | Tıp eğitimi almamış, devasa veriyle eğitilmiş genel modeller. | `Qwen2-VL`, `GPT-4V`, `Gemini` | Zero-shot yetenekleri uzman modelleri geçebilir mi? |
-| **Domain-Adaptive** | Biyomedikal metinlerle (PubMed) eğitime devam edilmiş modeller. | `LLaVA-Med`, `Med-PaLM 2` | Terminoloji hakimiyeti görüntü yorumlamaya katkı sağlıyor mu? |
-| **Specialist** | Doğrudan göğüs röntgeni ve rapor çiftleriyle eğitilmiş modeller. | `CheXagent`, `RadFM` | "Grounding" (yerelleştirme) konusunda en başarılılar mı? |
+## Model seti
 
-### 2. Değerlendirme Görevleri
-Proje altyapısı aşağıdaki görevleri destekler:
-*   **Rapor Üretimi (RRG):** Görüntüden tam teşekküllü radyoloji raporu yazma.
-*   **Görsel Soru Cevaplama (VQA):** "Kalp boyutu normal mi?" gibi soruları yanıtlama.
-*   **Yerelleştirme (Grounding):** Patolojilerin (örn. pnömoni) görüntü üzerindeki koordinatlarını bulma.
+Main (14):
+- Generalist: qwen2-vl-2b, qwen2.5-vl-3b, qwen3-vl-2b, phi3-vision, smolvlm2-2.2b, internvl2-2b, internvl2-4b, llama3-vision
+- Domain-adaptive: llava-med, medgemma-4b, biomedgpt
+- Specialist: chexagent, llava-rad, radfm
 
-### 3. Başarı Metrikleri
-*   **NLP:** BLEU, ROUGE (Metin benzerliği - *Not: Tıbbi doğruluk için yetersizdir, ancak baseline için kullanılır*).
-*   **Klinik:** RadGraph F1 (Varlık ve ilişki doğruluğu - *Gold Standard*).
-*   **Güvenilirlik:** Halüsinasyon Oranı ve Bias Testi.
+Extra (7):
+- got-ocr2, nougat-base, matcha-chartqa, qwen2-vl-ocr, latxa-qwen3-vl-2b, gpt4v, gemini
 
----
+## Environment stratejisi
 
-## 📚 Teorik Arkaplan (Literatür Özeti)
+Model ailesine gore ayrik environment dosyalari:
+- envs/generic_hf.yaml
+- envs/qwen.yaml
+- envs/phi.yaml
+- envs/internvl.yaml
+- envs/medical.yaml
+- envs/specialist.yaml
 
-Radyoloji raporu üretimi çalışmalarında 4 ana dönem bulunmaktadır:
-1.  **Baseline Era (R2Gen):** CNN + Transformer kullanımı.
-2.  **Knowledge-Driven:** Tıbbi bilgi grafikleri (RadGraph) ile destekleme.
-3.  **RAG & Retrieval:** Benzer vakaları "kopya" çekerek halüsinasyonu azaltma.
-4.  **SOTA (Multimodal LLM):** Chatbot şeklinde çalışan, yerelleştirme (grounding) yapabilen ajanlar.
+Gated/API gereksinimleri icin:
+- GATING_REQUIREMENTS.md
 
-**⚠️ Araştırma Tuzakları (Pitfalls):**
-*   **Prior Bias:** Modelin görüntüye bakmadan "Akciğerler temiz" diye ezbere rapor yazması. *Çözüm: Boş görüntü testi.*
-*   **Metrik Yanılgısı:** BLEU skorunun yüksek olması modelin klinik olarak doğru olduğunu göstermez.
+## Runtime presetleri
 
----
+Presets:
+- smoke_cpu
+- free_colab_t4
+- colab_paid_mid
+- gpu_24g
+- high_end_multi_gpu
 
-## � Proje Yapısı
+Kaynak:
+- presets/presets.yaml
 
-```
-LLMComparison/
-├── notebooks/             # Deney ortamı
-│   └── main_experiment.ipynb  # <--- BAŞLANGIÇ NOKTASI (Öğrenci Şablonu)
-├── src/                   # Kaynak kodlar
-│   ├── models/            # Model entegrasyonları (Qwen2, CheXagent vb.)
-│   ├── data/              # Veri yükleyiciler (MIMIC, VQA-RAD vb.)
-│   ├── evaluation/        # Metrik hesaplamaları (RadGraph, GREEN)
-│   └── utils/             # Yardımcı araçlar (Prompt yönetimi)
-│       └── rag.py         # <--- YENİ: Retrieval-Augmented Generation iskeleti
-├── configs/               # Deney konfigürasyonları (YAML)
-│   └── experiment_configs/ # RRG, VQA, Grounding ayarları
-├── experiments/           # Toplu deney scriptleri
-└── results/               # Çıktıların kaydedildiği yer
-```
+Her preset su alanlari tanimlar:
+- onerilen model listesi
+- quantization
+- batch size
+- image_size / num_crops
+- max_new_tokens
+- attention/cache ayarlari
+- riskler ve fallback stratejisi
 
----
+## Unified pipeline
 
-## 🚀 Kurulum ve Kullanım (Öğrenci Kılavuzu)
+Yeni tek komutlu runner:
+- experiments/run_unified.py
 
-Bu projeyi kullanmak için Google Colab önerilir.
+Akis:
+- config -> dataset -> model -> inference -> sample-level metrics -> aggregate -> paired stats
 
-### Adım 1: Projeyi İndirin
-Projeyi Google Colab'da veya yerel ortamınızda klonlayın:
+Standart output dizini:
+- results/<run_name>/config_snapshot.json
+- results/<run_name>/predictions.jsonl
+- results/<run_name>/sample_metrics.jsonl
+- results/<run_name>/aggregate_metrics.json
+- results/<run_name>/stats.json
+- results/<run_name>/errors.jsonl
+- results/<run_name>/environment.json
+
+## Notebook mimarisi
+
+Model notebooklari:
+- notebooks/models/qwen2_vl_2b.ipynb
+- notebooks/models/qwen25_vl_3b.ipynb
+- notebooks/models/phi35_vision.ipynb
+- notebooks/models/internvl2_2b.ipynb
+- notebooks/models/medgemma_4b.ipynb
+- notebooks/models/chexagent.ipynb
+- notebooks/models/radfm.ipynb
+- notebooks/models/llava_med.ipynb
+
+Family notebooklari:
+- notebooks/families/qwen_family.ipynb
+- notebooks/families/phi_family.ipynb
+- notebooks/families/internvl_family.ipynb
+
+Repo-level notebooklar:
+- notebooks/00_repo_smoke_test.ipynb
+- notebooks/01_dataset_schema_check.ipynb
+- notebooks/99_result_aggregation.ipynb
+- notebooks/aggregation_analysis.ipynb
+
+Karsilastirma notebooklari (yalnizca saved outputs):
+- notebooks/main_experiment.ipynb
+- notebooks/paper_experiment.ipynb
+- notebooks/run_full_experiment.ipynb
+
+## Calistirma komutlari
+
+Smoke test:
 ```bash
-git clone https://github.com/Hanketsu3/LLMComparison.git
-cd LLMComparison
+python experiments/run_unified.py \
+  --preset smoke_cpu \
+  --models qwen2-vl-2b \
+  --datasets hf_vqa_rad \
+  --num-samples 5 \
+  --skip-inaccessible \
+  --output-dir results \
+  --run-name smoke_cpu_qwen
 ```
 
-### Adım 2: Bağımlılıkları Yükleyin
+Colab T4:
 ```bash
-pip install -r requirements.txt
+python experiments/run_unified.py \
+  --preset free_colab_t4 \
+  --models generalist \
+  --datasets hf_vqa_rad \
+  --num-samples 50 \
+  --skip-inaccessible \
+  --output-dir results \
+  --run-name colab_t4_generalist
 ```
 
-### Adım 3: Deneye Başlayın
-
-**Seçenek 1: Tam Deney Pipeline'ı — Colab Üzerinde (Önerilen)**
-**`notebooks/run_full_experiment.ipynb`** dosyasını Colab'da açın (T4 GPU ile). Bu notebook uçtan uca:
-1. HuggingFace'ten gerçek VQA-RAD verisini indirir.
-2. 8 ücretsiz açık kaynak modeli sırayla yükler, çıkarım yapar ve GPU temizler.
-3. BLEU, ROUGE-L, VQA Accuracy, Halüsinasyon Oranı metriklerini otomatik hesaplar.
-4. Prior Bias Testi (siyah görüntü deneyi) ve Prompt Ablasyonu yapar.
-5. Sonuçları JSON + CSV olarak kaydeder.
-
-**Seçenek 2: Öğrenci Şablonu ile Kendi Deneyini Kurgulama**
-**`notebooks/main_experiment.ipynb`** dosyasını açın. Bu notebook, adım adım sizi yönlendirecektir:
-1.  Kütüphaneleri yükleme ve kurulum.
-2.  Açık kaynak bir model (Qwen2-VL) ile test yapma.
-3.  Örnek bir röntgen görüntüsünü analiz etme.
-4.  Farklı prompt tekniklerini (Baseline vs Detailed) karşılaştırma.
-
----
-
-## 🔧 İleri Seviye Kullanım (Script ile)
-
-Toplu deneyler için `experiments/run_comparison.py` scripti kullanılabilir. Hangi görevin çalışacağı `config` dosyasından belirlenir.
-**Rapor Üretimi (RRG) Testi:**
+24GB GPU:
 ```bash
-python experiments/run_comparison.py --config configs/experiment_configs/rrg_experiment.yaml
+python experiments/run_unified.py \
+  --preset gpu_24g \
+  --models main \
+  --datasets hf_iu_xray hf_vqa_rad \
+  --num-samples 120 \
+  --skip-inaccessible \
+  --output-dir results \
+  --run-name gpu24_main
 ```
 
-**VQA Testi:**
+## Common failure cases
+
+- access_gated
+- missing_api_key
+- insufficient_vram
+- missing_vllm
+- incompatible transformers version
+
+## Reproducibility
+
+- Her kosunun config ve environment snapshot'i kaydedilir.
+- Sample-level prediction ve metric kaydi tutulur.
+- Paired statistics sample-level dizi uzerinden hesaplanir.
+
+## Testler
+
+Fast test seti:
 ```bash
-python experiments/run_comparison.py --config configs/experiment_configs/vqa_experiment.yaml
+pytest tests/test_registry.py tests/test_runtime_config.py tests/test_schema_normalization.py tests/test_unified_runner_smoke.py tests/test_result_writer.py -q
 ```
-
----
-
-## ⚠️ Bilinen Sorunlar ve Model Durumu
-
-### 🎯 Lane Bazlı Deney Tasarımı (Güncel)
-
-### ✅ Generalist Lane (5+1 model)
-- **Qwen3-VL-2B-Instruct**
-- **Qwen2.5-VL-3B-Instruct**
-- **Qwen2-VL-2B-Instruct**
-- **Phi-3.5-Vision-Instruct**
-- **SmolVLM2-2.2B-Instruct**
-- **Llama-3.2-11B-Vision-Instruct** (gated erişim aktif)
-
-### ✅ Domain-Adaptive Lane (3 model)
-- **prithivMLmods/Qwen2-VL-OCR-2B-Instruct**
-- **HiTZ/Latxa-Qwen3-VL-2B-Instruct**
-- **google/medgemma-4b-it**
-
-### ✅ Specialist Lane (3 model)
-- **stepfun-ai/GOT-OCR-2.0-hf**
-- **facebook/nougat-base**
-- **google/matcha-chartqa**
-
-### Notlar
-- Deney, lane bazlı adil kıyaslama için tasarlandı: Generalist vs Domain-Adaptive vs Specialist.
-- Specialist modeller dar göreve odaklı olduğu için ana generalist tablolarından ayrı yorumlanmalıdır.
-- Colab T4 stabilitesi için 2B-4B modeller önceliklendirilmiştir; daha büyük modellerde 4-bit önerilir.
-
----
-
-## 🔮 Gelecek Çalışmalar (TODO)
-- [ ] **MedGemma Entegrasyonu:** Google'ın açık kaynaklı MedGemma modeli ile kıyaslama ekle.
-- [ ] **Daha Fazla Metrik:** BertScore ve BLEURT gibi semantik metrikleri dahil et.
-
----
-
-## 👤 Katkıda Bulunanlar
-*   **Proje Yürütücüsü:** Egemen Kaçıkan / Hanketsu3
-*   **İletişim:** [Proje Linki](https://github.com/Hanketsu3/LLMComparison)

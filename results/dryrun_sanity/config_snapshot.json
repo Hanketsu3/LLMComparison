@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-04-01T11:29:18.789759",
+  "config": {
+    "preset": "smoke_cpu",
+    "datasets": [
+      "hf_vqa_rad"
+    ],
+    "models": [
+      "qwen2-vl-2b",
+      "qwen2.5-vl-3b",
+      "qwen3-vl-2b",
+      "phi3-vision",
+      "smolvlm2-2.2b",
+      "internvl2-2b",
+      "internvl2-4b",
+      "llama3-vision",
+      "llava-med",
+      "medgemma-4b",
+      "biomedgpt",
+      "chexagent",
+      "llava-rad",
+      "radfm"
+    ],
+    "num_samples": null,
+    "backend": "auto",
+    "skip_inaccessible": true
+  }
+}

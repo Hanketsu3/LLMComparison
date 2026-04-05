@@ -103,7 +103,16 @@ class EnvironmentManager:
         with open(self.presets_file, "r") as f:
             data = yaml.safe_load(f)
         
-        return {k: v for k, v in data.items() if k != "presets"}
+        presets: Dict[str, Dict[str, Any]] = {}
+        for key, value in data.items():
+            if key == "presets":
+                continue
+            if not isinstance(value, dict):
+                continue
+            if "hardware" not in value or "inference" not in value:
+                continue
+            presets[key] = value
+        return presets
     
     def get_preset_config(self, preset: RuntimePreset) -> Dict[str, Any]:
         """Get raw preset configuration."""

@@ -220,8 +220,18 @@ class ResultWriter:
             aggregate[model_name] = {}
             
             # Iterate over all possible metrics
-            for metric_name in ["bleu", "rouge_l", "meteor", "radgraph_f1", 
-                               "chexbert_f1", "exact_match", "vqa_accuracy", "bbox_iou"]:
+            for metric_name in [
+                "bleu",
+                "rouge_l",
+                "meteor",
+                "radgraph_f1",
+                "chexbert_f1",
+                "exact_match",
+                "vqa_accuracy",
+                "bbox_iou",
+                "hallucination_score",
+                "factual_correctness",
+            ]:
                 values = [r[metric_name] for r in records if metric_name in r and r[metric_name] is not None]
                 
                 if values:

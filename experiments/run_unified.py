@@ -452,6 +452,26 @@ def main() -> None:
             total_samples = len(dataset)
             for sample_index, raw in enumerate(dataset, start=1):
                 sample = normalize_sample(raw, dataset_name=dataset_name, split="test")
+
+                sample_preview = (
+                    sample.question
+                    or sample.report_reference
+                    or sample.findings_reference
+                    or sample.impression_reference
+                    or ""
+                )
+                sample_preview = " ".join(sample_preview.split())[:120]
+                if sample_preview:
+                    print(
+                        f"Progress model={model_name} dataset={dataset_name} sample={sample_index}/{total_samples} "
+                        f"sample_id={sample.sample_id} preview={sample_preview}"
+                    )
+                else:
+                    print(
+                        f"Progress model={model_name} dataset={dataset_name} sample={sample_index}/{total_samples} "
+                        f"sample_id={sample.sample_id}"
+                    )
+
                 pred = run_inference(model, task=task, sample=sample)
                 writer.append_prediction(pred)
 
@@ -470,13 +490,12 @@ def main() -> None:
                         }
                     )
 
-                logger.info(
-                    "Progress model=%s dataset=%s sample=%s/%s",
-                    model_name,
-                    dataset_name,
-                    sample_index,
-                    total_samples,
-                )
+                if pred.predicted_text:
+                    prediction_preview = " ".join(pred.predicted_text.split())[:120]
+                    print(
+                        f"Output model={model_name} dataset={dataset_name} sample={sample_index}/{total_samples} "
+                        f"prediction={prediction_preview}"
+                    )
 
             del model
             try:
